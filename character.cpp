@@ -3,10 +3,6 @@
 
 Character::Character(const QString& name, int health, int attackPower, int defense,int x,int y)
     : name(name), health(health), maxHealth(health), attackPower(attackPower), defense(defense),posX(x),posY(y) {}
-
-
-
-
 void Character::takeDamage(int damage) {
     int reduced;
     if(damage-defense<=0){

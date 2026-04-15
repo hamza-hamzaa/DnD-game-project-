@@ -34,10 +34,11 @@ private:
 public:
     Grid(int r, int c);
     Cell& getCell(int r, int c);
-    bool isValidMove(int r, int c)  ;
-    bool isInside(int r, int c)  ;
-    int getRows();
-    int getCols();
+    const Cell& getCell(int r, int c) const;
+    bool isValidMove(int r, int c) const;
+    bool isInside(int r, int c) const;
+    int getRows() const;
+    int getCols() const;
 };
 
 #endif // GRID_H

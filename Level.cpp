@@ -3,7 +3,7 @@
 
 #include <QRandomGenerator>
 
-Level::Level(int LevelNum): LevelNum(LevelNum),Rows(3 + LevelNum),Cols(3 + LevelNum),grid(Rows, Cols){
+Level::Level(int LevelNum): LevelNum(LevelNum),Rows(LevelNum == 1 ? 6 : 3 + LevelNum),Cols(LevelNum == 1 ? 6 : 3 + LevelNum),grid(Rows, Cols){
 
 
 }
@@ -24,29 +24,12 @@ void Level::resetLevel() {
     generateLevel();
 }
 
-void Level::placeRandomEvents(int r, int c) {
-    if (!grid.isInside(r, c)) {
-        return;
-    }
-
-    Cell& cell = grid.getCell(r, c);
-
-    int randValue = QRandomGenerator::global()->bounded(100);
-
-    if (randValue >= 80) {
-        cell.hasPotion = true;
-    }
-    else if (randValue >= 60) {
-        cell.hasEnemy = true;
-    }
-}
-
 void Level::generateLevel() {
     enemies.clear();
 
     for (int r = 0; r < Rows; r++) {
         for (int c = 0; c < Cols; c++) {
-            Cell& cell = grid.getCell(r, c);   // reference, not copy
+            Cell& cell = grid.getCell(r, c);
             cell.visited = false;
             cell.hasEnemy = false;
             cell.hasPotion = false;
@@ -68,17 +51,22 @@ void Level::generateLevel() {
                 continue;
             }
 
-            placeRandomEvents(r, c);
+            Cell& cell = grid.getCell(r, c);
+            int randValue = QRandomGenerator::global()->bounded(100);
 
-            Cell& cell = grid.getCell(r, c);   // reference, not copy
+            if (randValue >= 80) {
+                cell.hasPotion = true;
+            }
+            else if (randValue >= 60) {
+                cell.hasEnemy = true;
+            }
+
             if (cell.hasEnemy) {
-                int nameRand = QRandomGenerator::global()->bounded(static_cast<int>(enemyNames.size()));
-                addEnemy(enemyNames[nameRand], r, c);
+                addEnemy(enemyNames[QRandomGenerator::global()->bounded(static_cast<int>(enemyNames.size()))], r, c);
             }
         }
     }
 }
-
 
 void Level::addEnemy(const QString& type, int r, int c) {
     int hpMin = 20 + (LevelNum - 1) * 10;
@@ -96,7 +84,6 @@ void Level::addEnemy(const QString& type, int r, int c) {
 
     enemies.push_back( Enemy(type, type, hp, atk, def, r, c) );
 }
-
 
 //Enemy(const QString& name, const QString& type, int health, int attackPower, int defense = 0)
 Grid& Level::getGrid() {

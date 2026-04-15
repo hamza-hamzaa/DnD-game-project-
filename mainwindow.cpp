@@ -61,29 +61,30 @@ QString MainWindow::findPlayerSpritePath() const
 
 QVector<MainWindow::WallSegment> MainWindow::wallSegmentsForGrid(int rows, int cols) const
 {
+    QVector<WallSegment> validSegments;
+
+    if (!gc || gc->getLevelNumber() != 1 || rows != 6 || cols != 6) {
+        return validSegments;
+    }
+
     const QVector<WallSegment> layout = {
-        {0, 0, 0, 1},
-        {0, 2, 0, 3},
-        {0, 1, 1, 1},
-        {1, 1, 1, 2},
-        {1, 3, 2, 3},
-        {2, 0, 2, 1},
+        {0, 1, 0, 2},
+        {0, 3, 0, 4},
+        {1, 0, 2, 0},
+        {1, 2, 1, 3},
+        {1, 4, 2, 4},
         {2, 1, 3, 1},
-        {3, 2, 3, 3}
+        {2, 2, 2, 3},
+        {2, 4, 2, 5},
+        {3, 0, 3, 1},
+        {3, 3, 4, 3},
+        {4, 1, 4, 2},
+        {4, 4, 5, 4},
+        {5, 2, 5, 3}
     };
 
-    QVector<WallSegment> validSegments;
-    validSegments.reserve(layout.size());
-
     for (int i = 0; i < layout.size(); i++) {
-        const WallSegment& segment = layout[i];
-        const bool firstInside = segment.rowA >= 0 && segment.rowA < rows
-                                 && segment.colA >= 0 && segment.colA < cols;
-        const bool secondInside = segment.rowB >= 0 && segment.rowB < rows
-                                  && segment.colB >= 0 && segment.colB < cols;
-        if (firstInside && secondInside) {
-            validSegments.push_back(segment);
-        }
+        validSegments.push_back(layout[i]);
     }
 
     return validSegments;
@@ -452,9 +453,21 @@ void MainWindow::buildEndPage()
         "QPushButton:hover { background-color: #284e28; border-color: #68e068; }"
         );
     connect(endRestartBtn, &QPushButton::clicked, [this]() {
-        // go back to start screen, clean up old game
-        delete gc;   gc = nullptr;
-        delete player; player = nullptr;
+        if (gc && player && gc->checkLose()) {
+            gc->restartLevel();
+            drawGrid();
+            redrawEntities();
+            updateHUD();
+            showLog("Level restarted.");
+            stack->setCurrentIndex(2);
+            gamePage->setFocus();
+            return;
+        }
+
+        delete gc;
+        gc = nullptr;
+        delete player;
+        player = nullptr;
         stack->setCurrentIndex(0);
     });
 
@@ -464,9 +477,9 @@ void MainWindow::buildEndPage()
     root->addLayout(btnRow);
 }
 
-// ─────────────────────────────────────────────
+// ────────────────────────────────────────────
 //  Slot: onStartClicked (Start page)
-// ─────────────────────────────────────────────
+// ────────────────────────────────────────────
 
 void MainWindow::onStartClicked()
 {
@@ -600,7 +613,11 @@ void MainWindow::drawGrid()
 
             // pick tile color
             QColor tileColor = QColor(55, 45, 80);     // normal floor
-            if (cell.hasTrap) {
+            if (cell.hasEnemy) {
+                tileColor = QColor(120, 35, 35);       // enemy -- red
+            } else if (cell.hasPotion) {
+                tileColor = QColor(35, 120, 55);       // potion -- green
+            } else if (cell.hasTrap) {
                 tileColor = QColor(60, 20, 10);        // trap -- dark red
             }
 
@@ -612,7 +629,6 @@ void MainWindow::drawGrid()
             scene->addItem(rect);
             cellItems[r][c] = rect;
 
-            // only traps remain visually marked
             if (cell.hasTrap) {
                 QGraphicsTextItem* lbl = scene->addText("⚠");
                 lbl->setDefaultTextColor(QColor(220, 80, 40));
@@ -719,7 +735,7 @@ void MainWindow::updateHUD()
     hpBar->setValue(qMax(0, hp));
     hpLabel->setText(QString::number(hp) + " / " + QString::number(maxHp));
 
-    levelLabel->setText("Level " + QString::number(gc->getLevelNumber())); // expose getLevelNumber()
+    levelLabel->setText("Level " + QString::number(gc->getLevelNumber()));
 }
 
 // ─────────────────────────────────────────────
@@ -742,6 +758,7 @@ void MainWindow::checkEndConditions()
 
     if (gc->checkLose()) {
         endMsg->setText("💀  DEFEATED  💀\n\n" + player->getName() + " fell in the darkness...");
+        endRestartBtn->setText("RETRY LEVEL");
         endMsg->setStyleSheet(
             "color: #e85050; font-size: 28px; font-weight: bold;"
             "font-family: 'Georgia', serif; letter-spacing: 3px;"
@@ -752,6 +769,7 @@ void MainWindow::checkEndConditions()
 
     if (gc->checkWin()) {
         endMsg->setText("⚔  VICTORY!  ⚔\n\nWell done, " + player->getName() + "!\nYou reached the final exit.");
+        endRestartBtn->setText("PLAY AGAIN");
         endMsg->setStyleSheet(
             "color: #e8c96a; font-size: 28px; font-weight: bold;"
             "font-family: 'Georgia', serif; letter-spacing: 3px;"

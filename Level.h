@@ -14,18 +14,15 @@ private:
     std::vector<Enemy> enemies;
     std::vector<QString> enemyNames = {"Goblin", "Orc", "Skeleton"};
 
-
 public:
     Level(int levelNum);
 
     void generateLevel();
-    void placeRandomEvents(int r, int c);
     void resetLevel();
 
     bool hasEnemies() const;
     bool isCompleted() const;
     bool isExitCell(int row, int col) const;
-
     void addEnemy(const QString& type, int r, int c);
 
     Grid& getGrid();
