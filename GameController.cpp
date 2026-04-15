@@ -31,6 +31,7 @@ QString GameController::movePlayer(int dx, int dy) {
     if (level->getGrid().isValidMove(newRow, newCol)) {
         player->setPos(newRow, newCol);
         QString log = handleCellEvent();
+        moveEnemy(dx,dy);
 
         if (player->isAlive() && level->isExitCell(player->getRow(), player->getCol())) {
             if (LevelNumber == 5) {
@@ -46,8 +47,6 @@ QString GameController::movePlayer(int dx, int dy) {
     }
     return "Blocked!";
 
-    player->setPos(newRow, newCol);
-    return handleCellEvent();
 }
 
 
@@ -162,3 +161,16 @@ bool GameController::checkLose() {
 Level* GameController::getLevel(){return level;}
 int GameController::getLevelNumber(){return LevelNumber;}
 bool GameController::isLevelStarted() const { return levelStarted; }
+void GameController::moveEnemy(int dx, int dy){
+    for(size_t i=0;i<level->getEnemies().size();i++){
+        int newRow = level->getEnemies()[i].getRow() + dx;
+        int newCol = level->getEnemies()[i].getCol() + dy;
+
+        if (level->getGrid().isValidMove(newRow, newCol)&&level->getGrid().getCell(level->getEnemies()[i].getRow()+dx,level->getEnemies()[i].getCol()+dy).hasEnemy==false&&level->getGrid().getCell(level->getEnemies()[i].getRow()+dx,level->getEnemies()[i].getCol()+dy).hasPotion==false) {
+            level->getGrid().getCell(level->getEnemies()[i].getRow(),level->getEnemies()[i].getCol()).hasEnemy=false;
+            level->getEnemies()[i].setPos(newRow, newCol);
+            level->getGrid().getCell(level->getEnemies()[i].getRow(),level->getEnemies()[i].getCol()).hasEnemy=true;
+        }
+
+    }
+}

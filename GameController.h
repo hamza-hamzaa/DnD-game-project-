@@ -20,6 +20,7 @@ public:
     void startGame();
     void loadLevel();
     QString movePlayer(int dx, int dy);
+    void moveEnemy(int dx, int dy);
     QString handleCellEvent();
     void giveLoot();
     void nextLevel();

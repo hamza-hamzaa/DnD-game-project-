@@ -58,6 +58,32 @@ QString MainWindow::findPlayerSpritePath() const
 
     return QString();
 }
+QString MainWindow::findEnemySpritePath(const Enemy& enemy) const
+{
+    const QString formsDir = QDir("/Users/hamza/projectt").absoluteFilePath("forms");
+    const QString type = enemy.getType().trimmed();
+
+    QString fileName;
+
+    if (type == "Goblin") {
+        fileName = "goblin.png";
+    } else if (type == "Orc") {
+        fileName = "orc.png";
+    } else if (type == "Skeleton") {
+        fileName = "skeleton.png";
+    }
+
+    if (fileName.isEmpty()) {
+        return QString();
+    }
+
+    const QString spritePath = QDir(formsDir).absoluteFilePath(fileName);
+    if (QFileInfo::exists(spritePath)) {
+        return spritePath;
+    }
+
+    return QString();
+}
 
 QVector<MainWindow::WallSegment> MainWindow::wallSegmentsForGrid(int rows, int cols) const
 {
@@ -613,11 +639,10 @@ void MainWindow::drawGrid()
 
             // pick tile color
             QColor tileColor = QColor(55, 45, 80);     // normal floor
-            if (cell.hasEnemy) {
-                tileColor = QColor(120, 35, 35);       // enemy -- red
-            } else if (cell.hasPotion) {
+            if (cell.hasPotion) {
                 tileColor = QColor(35, 120, 55);       // potion -- green
-            } else if (cell.hasTrap) {
+            }
+            if (cell.hasTrap) {
                 tileColor = QColor(60, 20, 10);        // trap -- dark red
             }
 
@@ -677,44 +702,91 @@ void MainWindow::redrawEntities()
 {
     if (!gc || !player) return;
 
-    // remove old entity sprites
+    // remove old enemy sprites
     for (int i = 0; i < enemySprites.size(); i++) {
         scene->removeItem(enemySprites[i]);
     }
     enemySprites.clear();
-    if (playerSprite) { scene->removeItem(playerSprite); playerSprite = nullptr; }
-    if (playerIcon)   { scene->removeItem(playerIcon);   playerIcon   = nullptr; }
 
-    // draw player using a per-race/per-class sprite when available
+    // remove old player visuals
+    if (playerSprite) {
+        scene->removeItem(playerSprite);
+        playerSprite = nullptr;
+    }
+    if (playerIcon) {
+        scene->removeItem(playerIcon);
+        playerIcon = nullptr;
+    }
+
+    const int spriteSize = cellSize - 16;
+    const int spriteOffset = (cellSize - spriteSize) / 2;
+
+    // draw enemies
+    std::vector<Enemy>& enemies = gc->getLevel()->getEnemies();
+
+    for (size_t i = 0; i < enemies.size(); i++) {
+        int er = enemies[i].getRow();
+        int ec = enemies[i].getCol();
+
+        QString enemyPath = findEnemySpritePath(enemies[i]);
+
+        if (!enemyPath.isEmpty()) {
+            QPixmap sprite(enemyPath);
+
+            if (!sprite.isNull()) {
+                QPixmap scaledSprite = sprite.scaled(
+                    spriteSize,
+                    spriteSize,
+                    Qt::KeepAspectRatio,
+                    Qt::SmoothTransformation
+                    );
+
+                QGraphicsPixmapItem* enemyItem = scene->addPixmap(scaledSprite);
+
+                qreal offsetX = (cellSize - scaledSprite.width()) / 2.0;
+                qreal offsetY = (cellSize - scaledSprite.height()) / 2.0;
+
+                enemyItem->setPos(ec * cellSize + offsetX,
+                                  er * cellSize + offsetY);
+
+                enemySprites.push_back(enemyItem);
+            }
+        }
+    }
+
+    // draw player
     int pr = player->getRow();
     int pc = player->getCol();
 
     const QString spritePath = findPlayerSpritePath();
-    const int spriteSize = cellSize - 16;
-    const int spriteOffset = (cellSize - spriteSize) / 2;
 
     if (!spritePath.isEmpty()) {
         QPixmap sprite(spritePath);
+
         if (!sprite.isNull()) {
-            const QPixmap scaledSprite = sprite.scaled(
+            QPixmap scaledSprite = sprite.scaled(
                 spriteSize,
                 spriteSize,
                 Qt::KeepAspectRatio,
                 Qt::SmoothTransformation
-            );
+                );
 
             playerSprite = scene->addPixmap(scaledSprite);
-            const qreal offsetX = (cellSize - scaledSprite.width()) / 2.0;
-            const qreal offsetY = (cellSize - scaledSprite.height()) / 2.0;
-            playerSprite->setPos(pc * cellSize + offsetX, pr * cellSize + offsetY);
+
+            qreal offsetX = (cellSize - scaledSprite.width()) / 2.0;
+            qreal offsetY = (cellSize - scaledSprite.height()) / 2.0;
+
+            playerSprite->setPos(pc * cellSize + offsetX,
+                                 pr * cellSize + offsetY);
             return;
         }
     }
 
+    // fallback player icon if sprite missing
     QString playerEmoji;
     if (player->getStyle() == "Warrior")        playerEmoji = "⚔";
     else if (player->getStyle() == "Fire Mage") playerEmoji = "🔥";
-    else                                         playerEmoji = "❄";
+    else                                        playerEmoji = "❄";
 
     playerIcon = scene->addText(playerEmoji);
     playerIcon->setFont(QFont("Segoe UI Emoji", 32));
@@ -783,11 +855,11 @@ void MainWindow::checkEndConditions()
 
 void MainWindow::tickEnemyAnim()
 {
-    // alternate enemy sprite alpha to create a "breathing" pulse
-    static bool bright = true;
+    static bool visible = true;
+
     for (int i = 0; i < enemySprites.size(); i++) {
-        QColor c = bright ? QColor(200, 50, 50) : QColor(140, 30, 30);
-        enemySprites[i]->setBrush(QBrush(c));
+        enemySprites[i]->setOpacity(visible ? 1.0 : 0.7);
     }
-    bright = !bright;
+
+    visible = !visible;
 }

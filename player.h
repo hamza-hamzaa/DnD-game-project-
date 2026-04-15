@@ -28,7 +28,6 @@ public:
 
     QString attackText() const override;
 };
-
 class Warrior : public Player {public:
     Warrior(const QString& name, const QString& race);
     int basicAttackDamage() const override;

@@ -40,5 +40,4 @@ public:
     int getRows() const;
     int getCols() const;
 };
-
 #endif // GRID_H

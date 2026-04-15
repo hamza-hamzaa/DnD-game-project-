@@ -85,7 +85,7 @@ private:
     int cellSize = 80;
     QVector<QVector<QGraphicsRectItem*>> cellItems; // visual tiles
     QGraphicsPixmapItem* playerSprite=nullptr;
-    QVector<QGraphicsEllipseItem*> enemySprites;
+    QVector<QGraphicsPixmapItem*> enemySprites;
     QGraphicsTextItem*playerIcon= nullptr;
 
     // -- helpers --
@@ -102,6 +102,7 @@ private:
     QVector<WallSegment> wallSegmentsForGrid(int rows, int cols) const;
     bool isMoveBlockedByWall(int fromRow, int fromCol, int toRow, int toCol) const;
     QString findPlayerSpritePath() const;
+    QString findEnemySpritePath(const Enemy& enemy) const;
 };
 
 #endif // MAINWINDOW_H
