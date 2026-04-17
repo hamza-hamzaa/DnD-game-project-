@@ -34,6 +34,10 @@ QString GameController::movePlayer(int dx, int dy) {
         moveEnemy(dx,dy);
 
         if (player->isAlive() && level->isExitCell(player->getRow(), player->getCol())) {
+	    if (!level->isCompleted()) {
+        	return "Defeat all enemies before you can exit!";
+    	    }
+
             if (LevelNumber == 5) {
                 return log.isEmpty() ? "You reached the final exit!" : log + "\nYou reached the final exit!";
             }
@@ -147,7 +151,14 @@ void GameController::restartLevel() {
     player->setHealth(player->getMaxHealth());
     loadLevel();
 }
+bool GameController::checkWin() {
+    if (!level) return false;
 
+    return LevelNumber == 1
+           && player->getHealth() > 0
+           && level->isCompleted()
+           && level->isExitCell(player->getRow(), player->getCol());
+}
 bool GameController::checkWin() {
     return level
            && LevelNumber == 5

@@ -48,21 +48,21 @@ private:
         int colB;
     };
 
-    // -- pages --
+    //pages
     QStackedWidget* stack;
 
-    // page 0: start screen
+    //page 0: start screen
     QWidget* startPage;
     QLineEdit* nameInput;
     QPushButton* startBtn;
 
-    // page 1: character select
+    //page 1: character select
     QWidget* selectPage;
     QComboBox* raceBox;
     QComboBox* styleBox;
     QPushButton* selectBtn;
 
-    // page 2: game screen
+    //page 2: game screen
     QWidget *gamePage;
     QGraphicsView* view;
     QGraphicsScene* scene;
@@ -71,24 +71,23 @@ private:
     QLabel* logLabel;
     QProgressBar* hpBar;
     QPushButton* restartBtn;
-    // page 3: game over / victory
+    //page 3: game over or victory
     QWidget* endPage;
     QLabel*endMsg;
     QPushButton* endRestartBtn;
 
-    // -- game objects --
+    //game objects
     Player* player = nullptr;
     GameController* gc = nullptr;
     QTimer* animTimer;
 
-    // -- grid rendering --
+    //grid rendering
     int cellSize = 80;
-    QVector<QVector<QGraphicsRectItem*>> cellItems; // visual tiles
+    QVector<QVector<QGraphicsRectItem*>> cellItems;
     QGraphicsPixmapItem* playerSprite=nullptr;
     QVector<QGraphicsPixmapItem*> enemySprites;
     QGraphicsTextItem*playerIcon= nullptr;
 
-    // -- helpers --
     void buildStartPage();
     void buildSelectPage();
     void buildGamePage();
@@ -105,7 +104,7 @@ private:
     QString findEnemySpritePath(const Enemy& enemy) const;
 };
 
-#endif // MAINWINDOW_H
+#endif
 
 
 
