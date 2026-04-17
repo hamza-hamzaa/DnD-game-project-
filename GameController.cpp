@@ -159,12 +159,7 @@ bool GameController::checkWin() {
            && level->isCompleted()
            && level->isExitCell(player->getRow(), player->getCol());
 }
-bool GameController::checkWin() {
-    return level
-           && LevelNumber == 5
-           && player->getHealth() > 0
-           && level->isExitCell(player->getRow(), player->getCol());
-}
+
 
 bool GameController::checkLose() {
     return player->getHealth() <= 0;

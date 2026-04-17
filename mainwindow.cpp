@@ -615,6 +615,16 @@ void MainWindow::drawGrid()
     int rows = grid.getRows();
     int cols = grid.getCols();
 
+    QPixmap bgPix("/Users/yusufiraky/DnD-game-project-/forms/dungeon_bg.png");
+    if (!bgPix.isNull()) {
+
+        QPixmap scaledBg = bgPix.scaled(700, 700,
+                                        Qt::KeepAspectRatio,
+                                        Qt::SmoothTransformation);
+        scene->setBackgroundBrush(QBrush(scaledBg));
+    } else {
+        scene->setBackgroundBrush(QBrush(QColor(10, 8, 16)));
+    }
     cellItems.resize(rows);
 
     for (int r = 0; r < rows; r++) {
@@ -622,29 +632,61 @@ void MainWindow::drawGrid()
         for (int c = 0; c < cols; c++) {
             Cell& cell = grid.getCell(r, c);
 
-            // pick tile color
-            QColor tileColor = QColor(55, 45, 80);
+            // always draw floor tile first
+            QString floorPath = "/Users/yusufiraky/DnD-game-project-/forms/floor.png";
+            QPixmap floorPix(floorPath);
+            if (!floorPix.isNull()) {
+                floorPix = floorPix.scaled(cellSize, cellSize,
+                                           Qt::IgnoreAspectRatio,
+                                           Qt::SmoothTransformation);
+                QGraphicsPixmapItem* tileItem = scene->addPixmap(floorPix);
+                tileItem->setPos(c * cellSize, r * cellSize);
+            } else {
+                QGraphicsRectItem* rect = new QGraphicsRectItem(
+                    c * cellSize, r * cellSize, cellSize - 2, cellSize - 2
+                    );
+                rect->setBrush(QBrush(QColor(55, 45, 80)));
+                rect->setPen(QPen(QColor(100, 80, 130), 1));
+                scene->addItem(rect);
+                cellItems[r][c] = rect;
+            }
+
+            // potion on top of floor
             if (cell.hasPotion) {
-                tileColor = QColor(35, 120, 55);
-            }
-            if (cell.hasTrap) {
-                tileColor = QColor(60, 20, 10);
+                QString potionPath = "/Users/yusufiraky/DnD-game-project-/forms/potion.png";
+                QPixmap potionPix(potionPath);
+                if (!potionPix.isNull()) {
+                    int potionSize = cellSize - 20;
+                    potionPix = potionPix.scaled(potionSize, potionSize,
+                                                 Qt::KeepAspectRatio,
+                                                 Qt::SmoothTransformation);
+                    QGraphicsPixmapItem* potionItem = scene->addPixmap(potionPix);
+                    int offset = (cellSize - potionSize) / 2;
+                    potionItem->setPos(c * cellSize + offset, r * cellSize + offset);
+                } else {
+                    QGraphicsRectItem* rect = new QGraphicsRectItem(
+                        c * cellSize, r * cellSize, cellSize - 2, cellSize - 2
+                        );
+                    rect->setBrush(QBrush(QColor(35, 120, 55, 120)));
+                    rect->setPen(Qt::NoPen);
+                    scene->addItem(rect);
+                }
             }
 
-            QGraphicsRectItem* rect = new QGraphicsRectItem(
-                c * cellSize, r * cellSize, cellSize - 2, cellSize - 2
-                );
-            rect->setBrush(QBrush(tileColor));
-            rect->setPen(QPen(QColor(100, 80, 130), 1));
-            scene->addItem(rect);
-            cellItems[r][c] = rect;
 
-            if (cell.hasTrap) {
-                QGraphicsTextItem* lbl = scene->addText("⚠");
-                lbl->setDefaultTextColor(QColor(220, 80, 40));
-                lbl->setFont(QFont("Segoe UI Emoji", 16));
-                lbl->setPos(c * cellSize + 14, r * cellSize + 10);
+            // exit on bottom-right cell
+            if (r == rows - 1 && c == cols - 1) {
+                QString exitPath = "/Users/yusufiraky/DnD-game-project-/forms/exit.png";
+                QPixmap exitPix(exitPath);
+                if (!exitPix.isNull()) {
+                    exitPix = exitPix.scaled(cellSize, cellSize,
+                                             Qt::IgnoreAspectRatio,
+                                             Qt::SmoothTransformation);
+                    QGraphicsPixmapItem* exitItem = scene->addPixmap(exitPix);
+                    exitItem->setPos(c * cellSize, r * cellSize);
+                }
             }
+
         }
     }
     int wt = 6;
