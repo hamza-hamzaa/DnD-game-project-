@@ -138,22 +138,19 @@ bool MainWindow::isMoveBlockedByWall(int fromRow, int fromCol, int toRow, int to
     return false;
 }
 
-    // ─────────────────────────────────────────────
-    //  Constructor / Destructor
-    // ─────────────────────────────────────────────
-
+    //constructor/destructor
     MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),animTimer(new QTimer(this))
 {
     setWindowTitle("Dungeon Realms");
     setFixedSize(800, 650);
 
-    // dark background for the whole window
+    //dark background
     QPalette pal = palette();
     pal.setColor(QPalette::Window, QColor(15, 12, 20));
     setPalette(pal);
 
-    // stacked widget holds all pages
+    //stacked widget that holds all pages
     stack = new QStackedWidget(this);
     setCentralWidget(stack);
 
@@ -162,10 +159,10 @@ bool MainWindow::isMoveBlockedByWall(int fromRow, int fromCol, int toRow, int to
     buildGamePage();
     buildEndPage();
 
-    stack->addWidget(startPage);   // index 0
-    stack->addWidget(selectPage);  // index 1
-    stack->addWidget(gamePage);    // index 2
-    stack->addWidget(endPage);     // index 3
+    stack->addWidget(startPage);
+    stack->addWidget(selectPage);
+    stack->addWidget(gamePage);
+    stack->addWidget(endPage);
 
     stack->setCurrentIndex(0);
 
@@ -180,10 +177,8 @@ MainWindow::~MainWindow()
     delete player;
 }
 
-// ─────────────────────────────────────────────
-//  Page builders
-// ─────────────────────────────────────────────
 
+//page builders
 void MainWindow::buildStartPage()
 {
     startPage = new QWidget;
@@ -212,7 +207,7 @@ void MainWindow::buildStartPage()
 
     root->addSpacing(20);
 
-    // name input
+    //name input
     QLabel* nameLabel = new QLabel("Enter your name:");
     nameLabel->setAlignment(Qt::AlignCenter);
     nameLabel->setStyleSheet("color: #c8b88a; font-size: 16px;");
@@ -239,7 +234,7 @@ void MainWindow::buildStartPage()
 
     root->addSpacing(10);
 
-    // start button
+    //start button
     startBtn = new QPushButton("BEGIN ADVENTURE");
     startBtn->setFixedSize(220, 48);
     startBtn->setCursor(Qt::PointingHandCursor);
@@ -287,7 +282,7 @@ void MainWindow::buildSelectPage()
 
     root->addSpacing(16);
 
-    // race row
+    //race row
     QLabel* raceLabel = new QLabel("Race:");
     raceLabel->setStyleSheet("color: #c8b88a; font-size: 15px;");
     raceBox = new QComboBox;
@@ -310,7 +305,7 @@ void MainWindow::buildSelectPage()
     raceRow->addWidget(raceBox);
     root->addLayout(raceRow);
 
-    // style row
+    //style row
     QLabel* styleLabel = new QLabel("Class:");
     styleLabel->setStyleSheet("color: #c8b88a; font-size: 15px;");
     styleBox = new QComboBox;
@@ -326,7 +321,7 @@ void MainWindow::buildSelectPage()
     styleRow->addWidget(styleBox);
     root->addLayout(styleRow);
 
-    // class description hint
+    //class description
     QLabel* hint = new QLabel("Warrior: tanky melee  |  Fire Mage: high damage  |  Ice Mage: balanced");
     hint->setAlignment(Qt::AlignCenter);
     hint->setStyleSheet("color: #6a5840; font-size: 12px;");
@@ -366,7 +361,7 @@ void MainWindow::buildGamePage()
     root->setContentsMargins(8, 8, 8, 8);
     root->setSpacing(6);
 
-    // ── HUD bar at top ──
+    //HUD bar at the top
     QHBoxLayout* hud = new QHBoxLayout;
     hud->setSpacing(16);
 
@@ -402,7 +397,7 @@ void MainWindow::buildGamePage()
 
     root->addLayout(hud);
 
-    // ── Graphics view (the dungeon) ──
+    //graphics view of the dungeon
     scene = new QGraphicsScene(this);
     scene->setBackgroundBrush(QBrush(QColor(10, 8, 16)));
 
@@ -418,7 +413,7 @@ void MainWindow::buildGamePage()
         );
     root->addWidget(view, 1);
 
-    // ── Log label ──
+    //log label
     logLabel = new QLabel("Use arrow keys or WASD to move.");
     logLabel->setAlignment(Qt::AlignCenter);
     logLabel->setWordWrap(true);
@@ -432,7 +427,7 @@ void MainWindow::buildGamePage()
         );
     root->addWidget(logLabel);
 
-    // ── Restart button ──
+    //restart button
     restartBtn = new QPushButton("Restart Level");
     restartBtn->setFixedHeight(32);
     restartBtn->setCursor(Qt::PointingHandCursor);
@@ -503,9 +498,7 @@ void MainWindow::buildEndPage()
     root->addLayout(btnRow);
 }
 
-// ────────────────────────────────────────────
-//  Slot: onStartClicked (Start page)
-// ────────────────────────────────────────────
+//start page
 
 void MainWindow::onStartClicked()
 {
@@ -517,9 +510,7 @@ void MainWindow::onStartClicked()
     stack->setCurrentIndex(1); // go to character select
 }
 
-// ─────────────────────────────────────────────
-//  Slot: onSelectClicked (Character select page)
-// ─────────────────────────────────────────────
+//character select page
 
 void MainWindow::onSelectClicked()
 {
@@ -552,9 +543,7 @@ void MainWindow::onSelectClicked()
     gamePage->setFocus();
 }
 
-// ─────────────────────────────────────────────
-//  Slot: onRestartClicked (in-game restart)
-// ─────────────────────────────────────────────
+//restart
 
 void MainWindow::onRestartClicked()
 {
@@ -566,9 +555,7 @@ void MainWindow::onRestartClicked()
     showLog("Level restarted.");
 }
 
-// ─────────────────────────────────────────────
-//  Keyboard input
-// ─────────────────────────────────────────────
+//keyboard input
 void MainWindow::keyPressEvent(QKeyEvent* event)
 {
     if (stack->currentIndex() != 2 || !gc || !player) {
@@ -612,9 +599,7 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
 
     QTimer::singleShot(800, this, &MainWindow::checkEndConditions);
 }
-// ─────────────────────────────────────────────
-//  Grid rendering
-// ─────────────────────────────────────────────
+//grid rendering
 
 void MainWindow::drawGrid()
 {
@@ -626,10 +611,20 @@ void MainWindow::drawGrid()
     playerSprite  = nullptr;
     playerIcon    = nullptr;
 
-    Grid& grid = gc->getLevel()->getGrid();      // NOTE: expose getLevel() in GameController
+    Grid& grid = gc->getLevel()->getGrid();
     int rows = grid.getRows();
     int cols = grid.getCols();
 
+    QPixmap bgPix("/Users/yusufiraky/DnD-game-project-/forms/dungeon_bg.png");
+    if (!bgPix.isNull()) {
+
+        QPixmap scaledBg = bgPix.scaled(700, 700,
+                                        Qt::KeepAspectRatio,
+                                        Qt::SmoothTransformation);
+        scene->setBackgroundBrush(QBrush(scaledBg));
+    } else {
+        scene->setBackgroundBrush(QBrush(QColor(10, 8, 16)));
+    }
     cellItems.resize(rows);
 
     for (int r = 0; r < rows; r++) {
@@ -637,29 +632,61 @@ void MainWindow::drawGrid()
         for (int c = 0; c < cols; c++) {
             Cell& cell = grid.getCell(r, c);
 
-            // pick tile color
-            QColor tileColor = QColor(55, 45, 80);     // normal floor
+            // always draw floor tile first
+            QString floorPath = "/Users/yusufiraky/DnD-game-project-/forms/floor.png";
+            QPixmap floorPix(floorPath);
+            if (!floorPix.isNull()) {
+                floorPix = floorPix.scaled(cellSize, cellSize,
+                                           Qt::IgnoreAspectRatio,
+                                           Qt::SmoothTransformation);
+                QGraphicsPixmapItem* tileItem = scene->addPixmap(floorPix);
+                tileItem->setPos(c * cellSize, r * cellSize);
+            } else {
+                QGraphicsRectItem* rect = new QGraphicsRectItem(
+                    c * cellSize, r * cellSize, cellSize - 2, cellSize - 2
+                    );
+                rect->setBrush(QBrush(QColor(55, 45, 80)));
+                rect->setPen(QPen(QColor(100, 80, 130), 1));
+                scene->addItem(rect);
+                cellItems[r][c] = rect;
+            }
+
+            // potion on top of floor
             if (cell.hasPotion) {
-                tileColor = QColor(35, 120, 55);       // potion -- green
-            }
-            if (cell.hasTrap) {
-                tileColor = QColor(60, 20, 10);        // trap -- dark red
+                QString potionPath = "/Users/yusufiraky/DnD-game-project-/forms/potion.png";
+                QPixmap potionPix(potionPath);
+                if (!potionPix.isNull()) {
+                    int potionSize = cellSize - 20;
+                    potionPix = potionPix.scaled(potionSize, potionSize,
+                                                 Qt::KeepAspectRatio,
+                                                 Qt::SmoothTransformation);
+                    QGraphicsPixmapItem* potionItem = scene->addPixmap(potionPix);
+                    int offset = (cellSize - potionSize) / 2;
+                    potionItem->setPos(c * cellSize + offset, r * cellSize + offset);
+                } else {
+                    QGraphicsRectItem* rect = new QGraphicsRectItem(
+                        c * cellSize, r * cellSize, cellSize - 2, cellSize - 2
+                        );
+                    rect->setBrush(QBrush(QColor(35, 120, 55, 120)));
+                    rect->setPen(Qt::NoPen);
+                    scene->addItem(rect);
+                }
             }
 
-            QGraphicsRectItem* rect = new QGraphicsRectItem(
-                c * cellSize, r * cellSize, cellSize - 2, cellSize - 2
-                );
-            rect->setBrush(QBrush(tileColor));
-            rect->setPen(QPen(QColor(100, 80, 130), 1));
-            scene->addItem(rect);
-            cellItems[r][c] = rect;
 
-            if (cell.hasTrap) {
-                QGraphicsTextItem* lbl = scene->addText("⚠");
-                lbl->setDefaultTextColor(QColor(220, 80, 40));
-                lbl->setFont(QFont("Segoe UI Emoji", 16));
-                lbl->setPos(c * cellSize + 14, r * cellSize + 10);
+            // exit on bottom-right cell
+            if (r == rows - 1 && c == cols - 1) {
+                QString exitPath = "/Users/yusufiraky/DnD-game-project-/forms/exit.png";
+                QPixmap exitPix(exitPath);
+                if (!exitPix.isNull()) {
+                    exitPix = exitPix.scaled(cellSize, cellSize,
+                                             Qt::IgnoreAspectRatio,
+                                             Qt::SmoothTransformation);
+                    QGraphicsPixmapItem* exitItem = scene->addPixmap(exitPix);
+                    exitItem->setPos(c * cellSize, r * cellSize);
+                }
             }
+
         }
     }
     int wt = 6;
@@ -694,9 +721,7 @@ void MainWindow::drawGrid()
     view->centerOn(0, 0);
 }
 
-// ─────────────────────────────────────────────
-//  Entity rendering (player + enemies)
-// ─────────────────────────────────────────────
+//player and enemy rendering
 
 void MainWindow::redrawEntities()
 {
@@ -792,9 +817,7 @@ void MainWindow::redrawEntities()
     playerIcon->setFont(QFont("Segoe UI Emoji", 32));
     playerIcon->setPos(pc * cellSize + spriteOffset / 2, pr * cellSize + 2);
 }
-// ─────────────────────────────────────────────
-//  HUD update
-// ─────────────────────────────────────────────
+//HUD update
 
 void MainWindow::updateHUD()
 {
@@ -810,18 +833,14 @@ void MainWindow::updateHUD()
     levelLabel->setText("Level " + QString::number(gc->getLevelNumber()));
 }
 
-// ─────────────────────────────────────────────
-//  Log message
-// ─────────────────────────────────────────────
+//log message
 
 void MainWindow::showLog(const QString& msg)
 {
     logLabel->setText(msg);
 }
 
-// ─────────────────────────────────────────────
-//  Win / Lose check
-// ─────────────────────────────────────────────
+//win or lose check
 
 void MainWindow::checkEndConditions()
 {
@@ -849,10 +868,7 @@ void MainWindow::checkEndConditions()
         stack->setCurrentIndex(3);
     }
 }
-// ─────────────────────────────────────────────
-//  Enemy animation tick (visual pulse effect)
-// ─────────────────────────────────────────────
-
+//enemy animation tick
 void MainWindow::tickEnemyAnim()
 {
     static bool visible = true;
