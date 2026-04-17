@@ -7,6 +7,8 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QPixmap>
+#include <QVariantAnimation>
+#include <QEasingCurve>
 #include <algorithm>
 
 QString MainWindow::findPlayerSpritePath() const
@@ -490,6 +492,10 @@ void MainWindow::onSelectClicked()
     gc = new GameController(player, this);
     gc->startGame();
     gamePage->installEventFilter(gc);
+    hasDrawnEntities = false;
+    lastEnemyPositions.clear();
+    lastPlayerRow = -1;
+    lastPlayerCol = -1;
 
     // build the visual grid for level 1
     drawGrid();
@@ -509,6 +515,10 @@ void MainWindow::onRestartClicked()
 {
     if (!gc || !player) return;
     gc->restartLevel();
+    hasDrawnEntities = false;
+    lastEnemyPositions.clear();
+    lastPlayerRow = -1;
+    lastPlayerCol = -1;
     drawGrid();
     redrawEntities();
     updateHUD();
@@ -532,6 +542,7 @@ void MainWindow::drawGrid()
     Grid& grid = gc->getLevel()->getGrid();      // NOTE: expose getLevel() in GameController
     int rows = grid.getRows();
     int cols = grid.getCols();
+    cellSize = (rows >= 8 || cols >= 8) ? 62 : 95;
 
     cellItems.resize(rows);
 
@@ -652,8 +663,17 @@ void MainWindow::redrawEntities()
                 qreal offsetX = (cellSize - scaledSprite.width()) / 2.0;
                 qreal offsetY = (cellSize - scaledSprite.height()) / 2.0;
 
-                enemyItem->setPos(ec * cellSize + offsetX,
-                                  er * cellSize + offsetY);
+                const QPointF targetPos(ec * cellSize + offsetX, er * cellSize + offsetY);
+                QPointF startPos = targetPos;
+                if (hasDrawnEntities && i < static_cast<size_t>(lastEnemyPositions.size())) {
+                    const int prevR = lastEnemyPositions[static_cast<int>(i)].first;
+                    const int prevC = lastEnemyPositions[static_cast<int>(i)].second;
+                    startPos = QPointF(prevC * cellSize + offsetX, prevR * cellSize + offsetY);
+                }
+                enemyItem->setPos(startPos);
+                if (hasDrawnEntities && startPos != targetPos) {
+                    animateItemTo(enemyItem, startPos, targetPos, 150);
+                }
 
                 enemySprites.push_back(enemyItem);
             }
@@ -682,8 +702,23 @@ void MainWindow::redrawEntities()
             qreal offsetX = (cellSize - scaledSprite.width()) / 2.0;
             qreal offsetY = (cellSize - scaledSprite.height()) / 2.0;
 
-            playerSprite->setPos(pc * cellSize + offsetX,
-                                 pr * cellSize + offsetY);
+            const QPointF targetPos(pc * cellSize + offsetX, pr * cellSize + offsetY);
+            QPointF startPos = targetPos;
+            if (hasDrawnEntities && lastPlayerRow >= 0 && lastPlayerCol >= 0) {
+                startPos = QPointF(lastPlayerCol * cellSize + offsetX, lastPlayerRow * cellSize + offsetY);
+            }
+            playerSprite->setPos(startPos);
+            if (hasDrawnEntities && startPos != targetPos) {
+                animateItemTo(playerSprite, startPos, targetPos, 170);
+            }
+
+            lastEnemyPositions.clear();
+            for (size_t i = 0; i < enemies.size(); i++) {
+                lastEnemyPositions.push_back({enemies[i].getRow(), enemies[i].getCol()});
+            }
+            lastPlayerRow = pr;
+            lastPlayerCol = pc;
+            hasDrawnEntities = true;
             return;
         }
     }
@@ -696,7 +731,25 @@ void MainWindow::redrawEntities()
 
     playerIcon = scene->addText(playerEmoji);
     playerIcon->setFont(QFont("Segoe UI Emoji", 32));
-    playerIcon->setPos(pc * cellSize + spriteOffset / 2, pr * cellSize + 2);
+    {
+        const QPointF targetPos(pc * cellSize + spriteOffset / 2, pr * cellSize + 2);
+        QPointF startPos = targetPos;
+        if (hasDrawnEntities && lastPlayerRow >= 0 && lastPlayerCol >= 0) {
+            startPos = QPointF(lastPlayerCol * cellSize + spriteOffset / 2, lastPlayerRow * cellSize + 2);
+        }
+        playerIcon->setPos(startPos);
+        if (hasDrawnEntities && startPos != targetPos) {
+            animateItemTo(playerIcon, startPos, targetPos, 170);
+        }
+    }
+
+    lastEnemyPositions.clear();
+    for (size_t i = 0; i < enemies.size(); i++) {
+        lastEnemyPositions.push_back({enemies[i].getRow(), enemies[i].getCol()});
+    }
+    lastPlayerRow = pr;
+    lastPlayerCol = pc;
+    hasDrawnEntities = true;
 }
 // ─────────────────────────────────────────────
 //  HUD update
@@ -768,4 +821,21 @@ void MainWindow::tickEnemyAnim()
     }
 
     visible = !visible;
+}
+
+void MainWindow::animateItemTo(QGraphicsItem* item, const QPointF& fromPos, const QPointF& toPos, int durationMs)
+{
+    if (!item) {
+        return;
+    }
+    auto* animation = new QVariantAnimation(this);
+    animation->setStartValue(fromPos);
+    animation->setEndValue(toPos);
+    animation->setDuration(durationMs);
+    animation->setEasingCurve(QEasingCurve::OutCubic);
+    connect(animation, &QVariantAnimation::valueChanged, this, [item](const QVariant& value) {
+        item->setPos(value.toPointF());
+    });
+    connect(animation, &QVariantAnimation::finished, animation, &QObject::deleteLater);
+    animation->start();
 }

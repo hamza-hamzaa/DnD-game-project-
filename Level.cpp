@@ -2,8 +2,10 @@
 #include"Grid.h"
 
 #include <QRandomGenerator>
+#include <algorithm>
 
-Level::Level(int LevelNum): LevelNum(LevelNum),Rows(6),Cols(6),grid(Rows, Cols),potionNum(0),equipmentNum(0){
+Level::Level(int LevelNum, int rows, int cols)
+    : LevelNum(LevelNum), Rows(rows), Cols(cols), grid(Rows, Cols), potionNum(0), equipmentNum(0){
 
 
 }
@@ -26,6 +28,12 @@ void Level::resetLevel() {
 
 void Level::generateLevel() {
     enemies.clear();
+    potionNum = 0;
+    equipmentNum = 0;
+    const int cellCount = Rows * Cols;
+    const int maxPotions = std::max(2, cellCount / 8);
+    const int maxEquipment = std::max(1, cellCount / 10);
+    const int maxEnemies = std::max(2, LevelNum + cellCount / 6);
 
     for (int r = 0; r < Rows; r++) {
         for (int c = 0; c < Cols; c++) {
@@ -54,20 +62,37 @@ void Level::generateLevel() {
             Cell& cell = grid.getCell(r, c);
             int randValue = QRandomGenerator::global()->bounded(100);
 
-            if (randValue >= 80&&potionNum<6) {
+            if (randValue >= 80 && potionNum < maxPotions) {
                 cell.hasPotion = true;
                 potionNum++;
             }
-            else if (randValue >= 60&&randValue <80&& equipmentNum<6) {
+            else if (randValue >= 60 && randValue < 80 && equipmentNum < maxEquipment) {
                 cell.hasEquipment= true;
                 equipmentNum++;
             }
-            else if (randValue >= 40&&randValue<60&&enemies.size()<=LevelNum+6) {
+            else if (randValue >= 40 && randValue < 60 && enemies.size() < static_cast<size_t>(maxEnemies)) {
                 cell.hasEnemy = true;
             }
 
             if (cell.hasEnemy) {
                 addEnemy(enemyNames[QRandomGenerator::global()->bounded(static_cast<int>(enemyNames.size()))], r, c);
+            }
+        }
+    }
+
+    // Guarantee at least one trap in regular levels.
+    if (Rows >= 4 && Cols >= 4) {
+        bool placedTrap = false;
+        for (int attempt = 0; attempt < 100 && !placedTrap; attempt++) {
+            const int r = QRandomGenerator::global()->bounded(Rows);
+            const int c = QRandomGenerator::global()->bounded(Cols);
+            if ((r == 0 && c == 0) || (r == Rows - 1 && c == Cols - 1)) {
+                continue;
+            }
+            Cell& trapCell = grid.getCell(r, c);
+            if (!trapCell.hasEnemy && !trapCell.hasPotion && !trapCell.hasEquipment) {
+                trapCell.hasTrap = true;
+                placedTrap = true;
             }
         }
     }

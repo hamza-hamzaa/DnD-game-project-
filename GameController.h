@@ -14,8 +14,14 @@ class GameController : public QObject {
 private:
     int LevelNumber;
     Level* level;
+    Level* mainLevel;
     Player* player;
     bool levelStarted = false;
+    bool inTrapChallenge = false;
+    int trapReturnRow = 0;
+    int trapReturnCol = 0;
+    int lastPlayerRow = 0;
+    int lastPlayerCol = 0;
     MainWindow* mw = nullptr;
 
     bool isMoveBlockedByWall(int fromRow, int fromCol, int toRow, int toCol) const;

@@ -2,18 +2,23 @@
 #include <QRandomGenerator>
 #include <QKeyEvent>
 #include <QTimer>
+#include <cstdlib>
+#include <utility>
 
 #include "Enemy.h"
 #include "mainwindow.h"
 //constructor that initalizes all variables to a base value
 //level initalized to nullpts as startgame func. is what creates the actual level this is so that the functionalities dont overlap
 GameController::GameController(Player* p, MainWindow* owner)
-    : QObject(owner), LevelNumber(1), level(nullptr), player(p), mw(owner)
+    : QObject(owner), LevelNumber(1), level(nullptr), mainLevel(nullptr), player(p), mw(owner)
 {
 }
 //destructor that deletes alldynamically allocated memory in the class
 GameController::~GameController() {
-    delete level;
+    if (level != mainLevel) {
+        delete level;
+    }
+    delete mainLevel;
 }
 //function only  used in the start of the game and resets the levelnumber to one and creates the inital level
 void GameController::startGame() {
@@ -23,32 +28,50 @@ void GameController::startGame() {
 }
 //function that creates a level object based on the levelnumber and resets player pos
 void GameController::loadLevel() {
-    delete level;
-    level = new Level(LevelNumber);
+    if (level != mainLevel) {
+        delete level;
+    }
+    delete mainLevel;
+    mainLevel = new Level(LevelNumber, 8, 8);
+    level = mainLevel;
     level->generateLevel();
     player->setPos(0, 0);
     levelStarted = false;
+    inTrapChallenge = false;
+    trapReturnRow = 0;
+    trapReturnCol = 0;
+    lastPlayerRow = 0;
+    lastPlayerCol = 0;
 }
 //function first changes player pos through a temp var then checks if this new var is a valid move and if so it sets it as the players final position
 //return type is a type Qstring as it should be void however it returns a string so that it can interact with the window and type out messages for the player
 QString GameController::movePlayer(int dx, int dy) {
     levelStarted = true;
+    const int currentRow = player->getRow();
+    const int currentCol = player->getCol();
     int newRow = player->getRow() + dx;
     int newCol = player->getCol() + dy;
 
-    if (level->getGrid().isValidMove(newRow, newCol)) {
+    if (level->getGrid().isValidMove(newRow, newCol)
+        && !isMoveBlockedByWall(currentRow, currentCol, newRow, newCol)) {
+        lastPlayerRow = currentRow;
+        lastPlayerCol = currentCol;
         player->setPos(newRow, newCol);
         QString log = handleCellEvent();
         moveEnemy();
 
         if (player->isAlive() && level->isExitCell(player->getRow(), player->getCol())) {
-            if (LevelNumber == 5) {
-                return log.isEmpty() ? "You reached the final exit!" : log + "\nYou reached the final exit!";
+            if (inTrapChallenge) {
+                delete level;
+                level = mainLevel;
+                inTrapChallenge = false;
+                player->setPos(trapReturnRow, trapReturnCol);
+                const QString trapMsg = "You cleared the trap chamber and returned safely.";
+                return log.isEmpty() ? trapMsg : (log + "\n" + trapMsg);
             }
 
-            nextLevel();
-            return log.isEmpty() ? "You reached the exit. Descending to the next level." :
-                                   log + "\nYou reached the exit. Descending to the next level.";
+            return log.isEmpty() ? "You cleared level 1! Head to the end screen."
+                                 : log + "\nYou cleared level 1! Head to the end screen.";
         }
 
         return log;
@@ -126,9 +149,18 @@ QString GameController::handleCellEvent() {
         return "You found equipment! +3 attack, +1 defense.";
     }
     else if (cell.hasTrap) {
-        player->takeDamage(10);
         cell.hasTrap = false;
-        return "You triggered a trap! Lost 10 HP.";
+        if (!inTrapChallenge) {
+            inTrapChallenge = true;
+            trapReturnRow = lastPlayerRow;
+            trapReturnCol = lastPlayerCol;
+            level = new Level(LevelNumber, 3, 3);
+            level->generateLevel();
+            player->setPos(0, 0);
+            return "A trap pulled you into a 3x3 trap chamber. Reach its exit to return.";
+        }
+        player->takeDamage(8);
+        return "A trap hurt you for 8 HP.";
     }
 
     return "";
@@ -158,7 +190,8 @@ void GameController::restartLevel() {
 //checks game is won by checking the level number the health and the cell position
 bool GameController::checkWin() {
     return level
-           && LevelNumber == 5
+           && !inTrapChallenge
+           && LevelNumber == 1
            && player->getHealth() > 0
            && level->isExitCell(player->getRow(), player->getCol());
 }
@@ -174,28 +207,60 @@ int GameController::getLevelNumber(){return LevelNumber;}
 bool GameController::isLevelStarted() const { return levelStarted; }
 //function similar to move player however you're here it rates over the entire enemies array and checks if the move is valid and search, he has enemy boolen to a correct value
 void GameController::moveEnemy(){
+    vector<Enemy>& enemies = level->getEnemies();
+    const int playerRow = player->getRow();
+    const int playerCol = player->getCol();
 
-    for(size_t i=0;i<level->getEnemies().size();i++){
-        int dir[3]={-1,1,0};
-        int dx =dir[QRandomGenerator::global()->bounded(3)];
-        int dy;
-        if(dx==-1||dx==1 ){
-            dy=0;
-        }
-        else{
-            dy =dir[QRandomGenerator::global()->bounded(2)];
-        }
-        int newRow = level->getEnemies()[i].getRow() + dx;
-        int newCol = level->getEnemies()[i].getCol() + dy;
+    for (size_t i = 0; i < enemies.size(); i++) {
+        const int enemyRow = enemies[i].getRow();
+        const int enemyCol = enemies[i].getCol();
+        const int rowDelta = playerRow - enemyRow;
+        const int colDelta = playerCol - enemyCol;
 
-        if (level->getGrid().isValidMove(newRow, newCol)&&level->getGrid().getCell(level->getEnemies()[i].getRow()+dx,level->getEnemies()[i].getCol()+dy).hasEnemy==false
-            &&level->getGrid().getCell(level->getEnemies()[i].getRow()+dx,level->getEnemies()[i].getCol()+dy).hasPotion==false
-            &&level->getGrid().getCell(level->getEnemies()[i].getRow()+dx,level->getEnemies()[i].getCol()+dy).hasEquipment==false) {
-            level->getGrid().getCell(level->getEnemies()[i].getRow(),level->getEnemies()[i].getCol()).hasEnemy=false;
-            level->getEnemies()[i].setPos(newRow, newCol);
-            level->getGrid().getCell(level->getEnemies()[i].getRow(),level->getEnemies()[i].getCol()).hasEnemy=true;
+        // Try the axis with bigger distance first, then the other axis.
+        std::vector<std::pair<int, int>> candidates;
+        if (std::abs(rowDelta) >= std::abs(colDelta)) {
+            if (rowDelta != 0) candidates.push_back({(rowDelta > 0) ? 1 : -1, 0});
+            if (colDelta != 0) candidates.push_back({0, (colDelta > 0) ? 1 : -1});
+        } else {
+            if (colDelta != 0) candidates.push_back({0, (colDelta > 0) ? 1 : -1});
+            if (rowDelta != 0) candidates.push_back({(rowDelta > 0) ? 1 : -1, 0});
         }
 
+        // If direct chase is blocked, try side steps so enemies do not freeze.
+        candidates.push_back({1, 0});
+        candidates.push_back({-1, 0});
+        candidates.push_back({0, 1});
+        candidates.push_back({0, -1});
+
+        for (size_t j = 0; j < candidates.size(); j++) {
+            const int dx = candidates[j].first;
+            const int dy = candidates[j].second;
+            const int newRow = enemyRow + dx;
+            const int newCol = enemyCol + dy;
+
+            if (newRow == playerRow && newCol == playerCol) {
+                continue;
+            }
+
+            if (!level->getGrid().isValidMove(newRow, newCol)) {
+                continue;
+            }
+
+            if (isMoveBlockedByWall(enemyRow, enemyCol, newRow, newCol)) {
+                continue;
+            }
+
+            Cell& targetCell = level->getGrid().getCell(newRow, newCol);
+            if (targetCell.hasEnemy || targetCell.hasPotion || targetCell.hasEquipment) {
+                continue;
+            }
+
+            level->getGrid().getCell(enemyRow, enemyCol).hasEnemy = false;
+            enemies[i].setPos(newRow, newCol);
+            level->getGrid().getCell(newRow, newCol).hasEnemy = true;
+            break;
+        }
     }
 }
 
@@ -203,35 +268,17 @@ QVector<GameController::WallSegment> GameController::wallSegmentsForGrid(int row
 {
     QVector<WallSegment> validSegments;
 
-    if (!level || LevelNumber != 1 || rows != 6 || cols != 6) {
+    if (!level || rows != 8 || cols != 8 || inTrapChallenge) {
         return validSegments;
     }
 
     const QVector<WallSegment> layout = {
-        {0, 0, 0, 1},
-        {1, 1, 1, 2},
-        {2, 0, 2, 1},
-        {4, 0, 4, 1},
-        {3, 1, 3, 2},
-        {4, 1, 4, 2},
-        {5, 1, 5, 2},
-        {0, 2, 0, 3},
-        {1, 2, 1, 3},
-        {0, 3, 0, 4},
-        {1, 3, 1, 4},
-        {1, 4, 1, 5},
-        {5, 2, 5, 3},
-        {5, 4, 5, 5},
-        {1, 0, 2, 0},
-        {1, 1, 2, 1},
-        {2, 2, 3, 2},
-        {2, 3, 3, 3},
-        {2, 4, 3, 4},
-        {3, 0, 4, 0},
-        {3, 3, 4, 3},
-        {3, 4, 4, 4},
-        {3, 5, 4, 5},
-        {4, 3, 5, 3}
+        {0, 1, 0, 2}, {0, 4, 0, 5}, {1, 0, 1, 1}, {1, 3, 1, 4}, {1, 5, 1, 6},
+        {2, 2, 2, 3}, {2, 4, 2, 5}, {3, 1, 3, 2}, {3, 6, 3, 7}, {4, 0, 4, 1},
+        {4, 3, 4, 4}, {4, 5, 4, 6}, {5, 2, 5, 3}, {5, 4, 5, 5}, {6, 1, 6, 2},
+        {6, 6, 6, 7}, {7, 3, 7, 4}, {7, 5, 7, 6},
+        {0, 2, 1, 2}, {1, 4, 2, 4}, {2, 1, 3, 1}, {2, 5, 3, 5}, {3, 3, 4, 3},
+        {4, 2, 5, 2}, {4, 6, 5, 6}, {5, 4, 6, 4}, {6, 0, 7, 0}, {6, 3, 7, 3}
     };
 
     for (int i = 0; i < layout.size(); i++) {

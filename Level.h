@@ -18,7 +18,7 @@ private:
 
 
 public:
-    Level(int levelNum);
+    Level(int levelNum, int rows = 8, int cols = 8);
 
     void generateLevel();
     void resetLevel();

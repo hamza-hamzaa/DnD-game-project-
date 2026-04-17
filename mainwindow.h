@@ -20,6 +20,7 @@
 #include <QGraphicsEllipseItem>
 #include <QGraphicsTextItem>
 #include <QGraphicsPixmapItem>
+#include <QPointF>
 #include "GameController.h"
 #include "player.h"
 
@@ -78,6 +79,10 @@ private:
     QGraphicsPixmapItem* playerSprite=nullptr;
     QVector<QGraphicsPixmapItem*> enemySprites;
     QGraphicsTextItem*playerIcon= nullptr;
+    int lastPlayerRow = -1;
+    int lastPlayerCol = -1;
+    QVector<QPair<int, int>> lastEnemyPositions;
+    bool hasDrawnEntities = false;
 
     // -- helpers --
     void buildStartPage();
@@ -92,6 +97,7 @@ private:
     void checkEndConditions();
     QString findPlayerSpritePath() const;
     QString findEnemySpritePath(const Enemy& enemy) const;
+    void animateItemTo(QGraphicsItem* item, const QPointF& fromPos, const QPointF& toPos, int durationMs = 170);
 };
 
 #endif // MAINWINDOW_H
