@@ -1,16 +1,20 @@
 <RCC>
     <qresource prefix="/enemies">
-        <file>forms/dwarf fire mage.png</file>
-        <file>forms/dwarf ice mage.png</file>
-        <file>forms/dwarf warrior.png</file>
-        <file>forms/elf fire mage.png</file>
-        <file>forms/elf ice mage.png</file>
-        <file>forms/elf warrior.png</file>
+        <file>dwarf fire mage.png</file>
+        <file>dwarf ice mage.png</file>
+        <file>dwarf warrior.png</file>
+        <file>elf fire mage.png</file>
+        <file>elf ice mage.png</file>
+        <file>elf warrior.png</file>
+        <file>human fire mage.png</file>
+        <file>human ice mage.png</file>
+        <file>human warrior.png</file>
         <file>goblin.png</file>
-        <file>forms/human fire mage.png</file>
-        <file>forms/human ice mage.png</file>
-        <file>forms/human warrior.png</file>
         <file>orc.png</file>
         <file>skeleton.png</file>
+        <file>floor.png</file>
+        <file>exit.png</file>
+        <file>potion.png</file>
+        <file>dungeon_bg.png</file>
     </qresource>
 </RCC>

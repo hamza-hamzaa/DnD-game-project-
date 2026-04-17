@@ -22,23 +22,23 @@ QString MainWindow::findPlayerSpritePath() const
     const QString race = player->getRace().trimmed();
     const QString style = player->getStyle().trimmed();
     if (race == "Human" && style == "Warrior")
-        return ":/enemies/forms/human warrior.png";
+        return ":/enemies/human warrior.png";
     else if (race == "Human" && style == "Fire Mage")
-        return ":/enemies/forms/human fire mage.png";
+        return ":/enemies//human fire mage.png";
     else if (race == "Human" && style == "Ice Mage")
-        return ":/enemies/forms/human ice mage.png";
+        return ":/enemies/human ice mage.png";
     else if (race == "Elf" && style == "Warrior")
-        return ":/enemies/forms/elf warrior.png";
+        return ":/enemies/elf warrior.png";
     else if (race == "Elf" && style == "Fire Mage")
-        return ":/enemies/forms/elf fire mage.png";
+        return ":/enemies/elf fire mage.png";
     else if (race == "Elf" && style == "Ice Mage")
-        return ":/enemies/forms/elf ice mage.png";
+        return ":/enemies/elf ice mage.png";
     else if (race == "Dwarf" && style == "Warrior")
-        return ":/enemies/forms/dwarf warrior.png";
+        return ":/enemies/dwarf warrior.png";
     else if (race == "Dwarf" && style == "Fire Mage")
-        return ":/enemies/forms/dwarf fire mage.png";
+        return ":/enemies/dwarf fire mage.png";
     else if (race == "Dwarf" && style == "Ice Mage")
-        return ":/enemies/forms/dwarf ice mage.png";
+        return ":/enemies/dwarf ice mage.png";
     return QString();
 }
 
@@ -58,11 +58,11 @@ QString MainWindow::findEnemySpritePath(const Enemy& enemy) const
 }
 
 
-    // ─────────────────────────────────────────────
-    //  Constructor / Destructor
-    // ─────────────────────────────────────────────
+// ─────────────────────────────────────────────
+//  Constructor / Destructor
+// ─────────────────────────────────────────────
 
-    MainWindow::MainWindow(QWidget *parent)
+MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),animTimer(new QTimer(this))
 {
     setWindowTitle("Dungeon Realms");
@@ -499,48 +499,141 @@ void MainWindow::drawGrid()
     scene->clear();
     cellItems.clear();
     enemySprites.clear();
-    playerSprite  = nullptr;
-    playerIcon    = nullptr;
+    playerSprite = nullptr;
+    playerIcon = nullptr;
 
-    Grid& grid = gc->getLevel()->getGrid();      // NOTE: expose getLevel() in GameController
+    Grid& grid = gc->getLevel()->getGrid();
     int rows = grid.getRows();
     int cols = grid.getCols();
+
+    // Resource-file paths only
+    QPixmap bgPix(":/enemies/dungeon_bg.png");
+    QPixmap floorPix(":/enemies/floor.png");
+    QPixmap potionPix(":/enemies/potion.png");
+    QPixmap equipmentPix(":/enemies/equipment.png");
+    QPixmap exitPix(":/enemies/exit.png");
+
+    if (!bgPix.isNull()) {
+        QPixmap scaledBg = bgPix.scaled(
+            cols * cellSize,
+            rows * cellSize,
+            Qt::IgnoreAspectRatio,
+            Qt::SmoothTransformation
+            );
+        scene->setBackgroundBrush(QBrush(scaledBg));
+    } else {
+        scene->setBackgroundBrush(QBrush(QColor(10, 8, 16)));
+    }
 
     cellItems.resize(rows);
 
     for (int r = 0; r < rows; r++) {
         cellItems[r].resize(cols);
+
         for (int c = 0; c < cols; c++) {
             Cell& cell = grid.getCell(r, c);
 
-            // pick tile color
-            QColor tileColor = QColor(55, 45, 80);     // normal floor
+            // draw floor tile first
+            if (!floorPix.isNull()) {
+                QPixmap scaledFloor = floorPix.scaled(
+                    cellSize,
+                    cellSize,
+                    Qt::IgnoreAspectRatio,
+                    Qt::SmoothTransformation
+                    );
+
+                QGraphicsPixmapItem* tileItem = scene->addPixmap(scaledFloor);
+                tileItem->setPos(c * cellSize, r * cellSize);
+            } else {
+                QGraphicsRectItem* rect = new QGraphicsRectItem(
+                    c * cellSize, r * cellSize, cellSize - 2, cellSize - 2
+                    );
+                rect->setBrush(QBrush(QColor(55, 45, 80)));
+                rect->setPen(QPen(QColor(100, 80, 130), 1));
+                scene->addItem(rect);
+                cellItems[r][c] = rect;
+            }
+
+            // potion
             if (cell.hasPotion) {
-                tileColor = QColor(35, 120, 55);       // potion -- green
-            }
-            if (cell.hasTrap) {
-                tileColor = QColor(60, 20, 10);        // trap -- dark red
-            }
-            else if(cell.hasEquipment){
-                tileColor = QColor(0, 0, 100);
+                if (!potionPix.isNull()) {
+                    int potionSize = cellSize - 20;
+                    QPixmap scaledPotion = potionPix.scaled(
+                        potionSize,
+                        potionSize,
+                        Qt::KeepAspectRatio,
+                        Qt::SmoothTransformation
+                        );
+
+                    QGraphicsPixmapItem* potionItem = scene->addPixmap(scaledPotion);
+                    int offset = (cellSize - potionSize) / 2;
+                    potionItem->setPos(c * cellSize + offset, r * cellSize + offset);
+                } else {
+                    QGraphicsRectItem* overlay = new QGraphicsRectItem(
+                        c * cellSize, r * cellSize, cellSize - 2, cellSize - 2
+                        );
+                    overlay->setBrush(QBrush(QColor(35, 120, 55, 120)));
+                    overlay->setPen(Qt::NoPen);
+                    scene->addItem(overlay);
+                }
             }
 
-            QGraphicsRectItem* rect = new QGraphicsRectItem(
-                c * cellSize, r * cellSize, cellSize - 2, cellSize - 2
-                );
-            rect->setBrush(QBrush(tileColor));
-            rect->setPen(QPen(QColor(100, 80, 130), 1));
-            scene->addItem(rect);
-            cellItems[r][c] = rect;
+            // equipment
+            if (cell.hasEquipment) {
+                if (!equipmentPix.isNull()) {
+                    int equipmentSize = cellSize - 20;
+                    QPixmap scaledEquipment = equipmentPix.scaled(
+                        equipmentSize,
+                        equipmentSize,
+                        Qt::KeepAspectRatio,
+                        Qt::SmoothTransformation
+                        );
 
+                    QGraphicsPixmapItem* equipmentItem = scene->addPixmap(scaledEquipment);
+                    int offset = (cellSize - equipmentSize) / 2;
+                    equipmentItem->setPos(c * cellSize + offset, r * cellSize + offset);
+                } else {
+                    QGraphicsRectItem* overlay = new QGraphicsRectItem(
+                        c * cellSize, r * cellSize, cellSize - 2, cellSize - 2
+                        );
+                    overlay->setBrush(QBrush(QColor(40, 70, 150, 120)));
+                    overlay->setPen(Qt::NoPen);
+                    scene->addItem(overlay);
+                }
+            }
+
+            // trap
             if (cell.hasTrap) {
+                QGraphicsRectItem* overlay = new QGraphicsRectItem(
+                    c * cellSize, r * cellSize, cellSize - 2, cellSize - 2
+                    );
+                overlay->setBrush(QBrush(QColor(120, 30, 20, 110)));
+                overlay->setPen(Qt::NoPen);
+                scene->addItem(overlay);
+
                 QGraphicsTextItem* lbl = scene->addText("⚠");
                 lbl->setDefaultTextColor(QColor(220, 80, 40));
                 lbl->setFont(QFont("Segoe UI Emoji", 16));
-                lbl->setPos(c * cellSize + 14, r * cellSize + 10);
+                lbl->setPos(c * cellSize + 20, r * cellSize + 16);
+            }
+
+            // exit on bottom-right
+            if (r == rows - 1 && c == cols - 1) {
+                if (!exitPix.isNull()) {
+                    QPixmap scaledExit = exitPix.scaled(
+                        cellSize,
+                        cellSize,
+                        Qt::IgnoreAspectRatio,
+                        Qt::SmoothTransformation
+                        );
+
+                    QGraphicsPixmapItem* exitItem = scene->addPixmap(scaledExit);
+                    exitItem->setPos(c * cellSize, r * cellSize);
+                }
             }
         }
     }
+
     int wt = 6;
     QColor wallColor = QColor(180, 150, 220);
 
@@ -567,7 +660,6 @@ void MainWindow::drawGrid()
         scene->addItem(wall);
     }
 
-    // fit scene in view
     scene->setSceneRect(0, 0, cols * cellSize, rows * cellSize);
     view->setScene(scene);
     view->centerOn(0, 0);
