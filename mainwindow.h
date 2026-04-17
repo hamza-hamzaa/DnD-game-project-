@@ -41,7 +41,7 @@ private slots:
     void tickEnemyAnim();
 
 private:
-    // -- pages --
+    //  pages
     QStackedWidget* stack;
 
     // page 0: start screen
@@ -64,24 +64,24 @@ private:
     QLabel* logLabel;
     QProgressBar* hpBar;
     QPushButton* restartBtn;
-    // page 3: game over / victory
+    // page 3: game over or victory
     QWidget* endPage;
     QLabel*endMsg;
     QPushButton* endRestartBtn;
 
-    // -- game objects --
+    //   game objects
     Player* player = nullptr;
     GameController* gc = nullptr;
     QTimer* animTimer;
 
-    // -- grid rendering --
+    //   grid rendering
     int cellSize = 80;
-    QVector<QVector<QGraphicsRectItem*>> cellItems; // one colored rectangle per map tile
+    QVector<QVector<QGraphicsRectItem*>> cellItems;
     QGraphicsPixmapItem* playerSprite=nullptr;
     QVector<QGraphicsPixmapItem*> enemySprites;
     QGraphicsTextItem*playerIcon= nullptr;
 
-    // -- helpers --
+    //   helpers
     void buildStartPage();
     void buildSelectPage();
     void buildGamePage();

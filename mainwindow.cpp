@@ -1,6 +1,3 @@
-// Main window: builds the stacked pages (menu → hero → dungeon → ending), draws the map from GameController,
-// and updates HP / log text when the game state changes.
-
 #include "mainwindow.h"
 #include <QFont>
 #include <QPalette>
@@ -42,7 +39,7 @@ QString MainWindow::findPlayerSpritePath() const
     return QString();
 }
 
-// Resource path for this enemy's portrait (goblin / orc / skeleton).
+// Resource path for enemy
 QString MainWindow::findEnemySpritePath(const Enemy& enemy) const
 {
     const QString type = enemy.getType().trimmed();
@@ -58,10 +55,8 @@ QString MainWindow::findEnemySpritePath(const Enemy& enemy) const
 }
 
 
-// ─────────────────────────────────────────────
-//  Constructor / Destructor
-// ─────────────────────────────────────────────
 
+//constructor/destructor
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),animTimer(new QTimer(this))
 {
@@ -82,10 +77,10 @@ MainWindow::MainWindow(QWidget *parent)
     buildGamePage();
     buildEndPage();
 
-    stack->addWidget(startPage);   // index 0
-    stack->addWidget(selectPage);  // index 1
-    stack->addWidget(gamePage);    // index 2
-    stack->addWidget(endPage);     // index 3
+    stack->addWidget(startPage);
+    stack->addWidget(selectPage);
+    stack->addWidget(gamePage);
+    stack->addWidget(endPage);
 
     stack->setCurrentIndex(0);
 
@@ -100,10 +95,7 @@ MainWindow::~MainWindow()
     delete player;
 }
 
-// ─────────────────────────────────────────────
-//  Page builders
-// ─────────────────────────────────────────────
-
+//page builders
 void MainWindow::buildStartPage()
 {
     startPage = new QWidget;
@@ -287,7 +279,7 @@ void MainWindow::buildGamePage()
     root->setContentsMargins(8, 8, 8, 8);
     root->setSpacing(6);
 
-    // ── HUD bar at top ──
+    //HUD bar at top
     QHBoxLayout* hud = new QHBoxLayout;
     hud->setSpacing(16);
 
@@ -323,7 +315,7 @@ void MainWindow::buildGamePage()
 
     root->addLayout(hud);
 
-    // ── Graphics view (the dungeon) ──
+    //Graphics view of the dungeon
     scene = new QGraphicsScene(this);
     scene->setBackgroundBrush(QBrush(QColor(10, 8, 16)));
 
@@ -339,7 +331,7 @@ void MainWindow::buildGamePage()
         );
     root->addWidget(view, 1);
 
-    // ── Log label ──
+    //Log label
     logLabel = new QLabel("Use arrow keys or WASD to move.");
     logLabel->setAlignment(Qt::AlignCenter);
     logLabel->setWordWrap(true);
@@ -353,7 +345,7 @@ void MainWindow::buildGamePage()
         );
     root->addWidget(logLabel);
 
-    // ── Restart button ──
+    //Restart button
     restartBtn = new QPushButton("Restart Level");
     restartBtn->setFixedHeight(32);
     restartBtn->setCursor(Qt::PointingHandCursor);
@@ -424,10 +416,7 @@ void MainWindow::buildEndPage()
     root->addLayout(btnRow);
 }
 
-// ────────────────────────────────────────────
-//  Slot: onStartClicked (Start page)
-// ────────────────────────────────────────────
-
+//start page
 void MainWindow::onStartClicked()
 {
     QString name = nameInput->text().trimmed();
@@ -438,10 +427,8 @@ void MainWindow::onStartClicked()
     stack->setCurrentIndex(1); // go to character select
 }
 
-// ─────────────────────────────────────────────
-//  Slot: onSelectClicked (Character select page)
-// ─────────────────────────────────────────────
 
+//character select page
 void MainWindow::onSelectClicked()
 {
     QString name  = nameInput->text().trimmed();
@@ -474,9 +461,7 @@ void MainWindow::onSelectClicked()
     gamePage->setFocus();
 }
 
-// ─────────────────────────────────────────────
-//  Slot: onRestartClicked (in-game restart)
-// ─────────────────────────────────────────────
+//restart
 
 void MainWindow::onRestartClicked()
 {
@@ -488,9 +473,7 @@ void MainWindow::onRestartClicked()
     showLog("Level restarted.");
 }
 
-// ─────────────────────────────────────────────
-//  Grid rendering
-// ─────────────────────────────────────────────
+//grid rendering
 
 void MainWindow::drawGrid()
 {
@@ -506,7 +489,7 @@ void MainWindow::drawGrid()
     int rows = grid.getRows();
     int cols = grid.getCols();
 
-    // Resource-file paths only
+
     QPixmap bgPix(":/enemies/dungeon_bg.png");
     QPixmap floorPix(":/enemies/floor.png");
     QPixmap potionPix(":/enemies/potion.png");
@@ -665,9 +648,7 @@ void MainWindow::drawGrid()
     view->centerOn(0, 0);
 }
 
-// ─────────────────────────────────────────────
-//  Entity rendering (player + enemies)
-// ─────────────────────────────────────────────
+//player and enemy rendering
 
 void MainWindow::redrawEntities()
 {
@@ -763,9 +744,7 @@ void MainWindow::redrawEntities()
     playerIcon->setFont(QFont("Segoe UI Emoji", 32));
     playerIcon->setPos(pc * cellSize + spriteOffset / 2, pr * cellSize + 2);
 }
-// ─────────────────────────────────────────────
-//  HUD update
-// ─────────────────────────────────────────────
+//HUD update
 
 void MainWindow::updateHUD()
 {
@@ -781,18 +760,18 @@ void MainWindow::updateHUD()
     levelLabel->setText("Level " + QString::number(gc->getLevelNumber()));
 }
 
-// ─────────────────────────────────────────────
+
 //  Log message
-// ─────────────────────────────────────────────
+
 
 void MainWindow::showLog(const QString& msg)
 {
     logLabel->setText(msg);
 }
 
-// ─────────────────────────────────────────────
-//  Win / Lose check
-// ─────────────────────────────────────────────
+
+//  Win or Lose check
+
 
 void MainWindow::checkEndConditions()
 {
@@ -821,9 +800,8 @@ void MainWindow::checkEndConditions()
         stack->setCurrentIndex(3);
     }
 }
-// ─────────────────────────────────────────────
-//  Enemy animation tick (visual pulse effect)
-// ─────────────────────────────────────────────
+
+//  Enemy animation tick
 
 void MainWindow::tickEnemyAnim()
 {
