@@ -14,10 +14,10 @@ EQ            = =
 
 CC            = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang
 CXX           = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++
-DEFINES       = -DQT_QML_DEBUG -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB
-CFLAGS        = -pipe -g $(EXPORT_ARCH_ARGS) -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk -mmacosx-version-min=13 -Wall -Wextra $(DEFINES)
-CXXFLAGS      = -pipe -stdlib=libc++ -g -std=gnu++1z $(EXPORT_ARCH_ARGS) -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk -mmacosx-version-min=13 -Wall -Wextra $(DEFINES)
-INCPATH       = -I../../../projectt -I. -I../../../Qt/6.11.0/macos/lib/QtWidgets.framework/Headers -I../../../Qt/6.11.0/macos/lib/QtGui.framework/Headers -I../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers -I. -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk/System/Library/Frameworks/OpenGL.framework/Headers -I. -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk/System/Library/Frameworks/OpenGL.framework/Headers -I../../../Qt/6.11.0/macos/mkspecs/macx-clang -F/Users/hamza/Qt/6.11.0/macos/lib
+DEFINES       = -DQT_QML_DEBUG -DQT_WIDGETS_LIB -DQT_MULTIMEDIA_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB
+CFLAGS        = -pipe -g $(EXPORT_ARCH_ARGS) -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk -mmacosx-version-min=13 -Wall -Wextra $(DEFINES)
+CXXFLAGS      = -pipe -stdlib=libc++ -g -std=gnu++1z $(EXPORT_ARCH_ARGS) -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk -mmacosx-version-min=13 -Wall -Wextra $(DEFINES)
+INCPATH       = -I../../../projectt -I. -I../../../Qt/6.11.0/macos/lib/QtWidgets.framework/Headers -I../../../Qt/6.11.0/macos/lib/QtMultimedia.framework/Headers -I../../../Qt/6.11.0/macos/lib/QtGui.framework/Headers -I../../../Qt/6.11.0/macos/lib/QtNetwork.framework/Headers -I../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers -I. -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk/System/Library/Frameworks/OpenGL.framework/Headers -I. -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk/System/Library/Frameworks/OpenGL.framework/Headers -I../../../Qt/6.11.0/macos/mkspecs/macx-clang -F/Users/hamza/Qt/6.11.0/macos/lib
 QMAKE         = /Users/hamza/Qt/6.11.0/macos/bin/qmake
 DEL_FILE      = rm -f
 CHK_DIR_EXISTS= test -d
@@ -39,8 +39,8 @@ COMPRESS      = gzip -9f
 DISTNAME      = projectt1.0.0
 DISTDIR = /Users/hamza/projectt/build/Qt_6_11_0_for_macOS-Debug/.tmp/projectt1.0.0
 LINK          = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++
-LFLAGS        = -stdlib=libc++ -headerpad_max_install_names $(EXPORT_ARCH_ARGS) -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk -mmacosx-version-min=13 -Wl,-rpath,@executable_path/../Frameworks -Wl,-rpath,/Users/hamza/Qt/6.11.0/macos/lib
-LIBS          = $(SUBLIBS) -F/Users/hamza/Qt/6.11.0/macos/lib -framework QtWidgets -framework QtGui -framework AppKit -framework ImageIO -framework Metal -framework QtCore -framework IOKit -framework DiskArbitration -framework UniformTypeIdentifiers -framework OpenGL   
+LFLAGS        = -stdlib=libc++ -headerpad_max_install_names $(EXPORT_ARCH_ARGS) -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk -mmacosx-version-min=13 -Wl,-rpath,@executable_path/../Frameworks -Wl,-rpath,/Users/hamza/Qt/6.11.0/macos/lib
+LIBS          = $(SUBLIBS) -F/Users/hamza/Qt/6.11.0/macos/lib -framework QtWidgets -framework QtMultimedia -framework QtGui -framework AppKit -framework ImageIO -framework Metal -framework QtNetwork -framework QtCore -framework IOKit -framework DiskArbitration -framework UniformTypeIdentifiers -framework OpenGL   
 AR            = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar cq
 RANLIB        = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ranlib -s
 SED           = sed
@@ -59,7 +59,8 @@ SOURCES       = ../../GameController.cpp \
 		../../enemy.cpp \
 		../../main.cpp \
 		../../mainwindow.cpp \
-		../../player.cpp moc_mainwindow.cpp
+		../../player.cpp qrc_resources.cpp \
+		moc_mainwindow.cpp
 OBJECTS       = GameController.o \
 		Grid.o \
 		Level.o \
@@ -68,6 +69,7 @@ OBJECTS       = GameController.o \
 		main.o \
 		mainwindow.o \
 		player.o \
+		qrc_resources.o \
 		moc_mainwindow.o
 DIST          = /Qt/6.11.0/macos/mkspecs/features/spec_pre.prf \
 		/Qt/6.11.0/macos/mkspecs/features/device_config.prf \
@@ -338,7 +340,7 @@ TARGET        = projectt.app/Contents/MacOS/projectt
 
 ####### Custom Variables
 EXPORT_QMAKE_MAC_SDK = macosx
-EXPORT_QMAKE_MAC_SDK_VERSION = 26.4
+EXPORT_QMAKE_MAC_SDK_VERSION = 26.5
 EXPORT_QMAKE_XCODE_DEVELOPER_PATH = /Applications/Xcode.app/Contents/Developer
 EXPORT__QMAKE_STASH_ = /Users/hamza/projectt/build/Qt_6_11_0_for_macOS-Debug/.qmake.stash
 EXPORT_VALID_ARCHS = x86_64 arm64
@@ -606,8 +608,11 @@ Makefile: ../../projectt.pro ../../../Qt/6.11.0/macos/mkspecs/features/spec_pre.
 		../../../Qt/6.11.0/macos/mkspecs/features/yacc.prf \
 		../../../Qt/6.11.0/macos/mkspecs/features/lex.prf \
 		../../projectt.pro \
+		../../resources.qrc \
 		../../../Qt/6.11.0/macos/lib/QtWidgets.framework/Resources/QtWidgets.prl \
+		../../../Qt/6.11.0/macos/lib/QtMultimedia.framework/Resources/QtMultimedia.prl \
 		../../../Qt/6.11.0/macos/lib/QtGui.framework/Resources/QtGui.prl \
+		../../../Qt/6.11.0/macos/lib/QtNetwork.framework/Resources/QtNetwork.prl \
 		../../../Qt/6.11.0/macos/lib/QtCore.framework/Resources/QtCore.prl
 	$(QMAKE) -o Makefile ../../projectt.pro -spec macx-clang CONFIG+=debug CONFIG+=qml_debug
 ../../../Qt/6.11.0/macos/mkspecs/features/spec_pre.prf:
@@ -860,8 +865,11 @@ Makefile: ../../projectt.pro ../../../Qt/6.11.0/macos/mkspecs/features/spec_pre.
 ../../../Qt/6.11.0/macos/mkspecs/features/yacc.prf:
 ../../../Qt/6.11.0/macos/mkspecs/features/lex.prf:
 ../../projectt.pro:
+../../resources.qrc:
 ../../../Qt/6.11.0/macos/lib/QtWidgets.framework/Resources/QtWidgets.prl:
+../../../Qt/6.11.0/macos/lib/QtMultimedia.framework/Resources/QtMultimedia.prl:
 ../../../Qt/6.11.0/macos/lib/QtGui.framework/Resources/QtGui.prl:
+../../../Qt/6.11.0/macos/lib/QtNetwork.framework/Resources/QtNetwork.prl:
 ../../../Qt/6.11.0/macos/lib/QtCore.framework/Resources/QtCore.prl:
 qmake: FORCE
 	@$(QMAKE) -o Makefile ../../projectt.pro -spec macx-clang CONFIG+=debug CONFIG+=qml_debug
@@ -887,6 +895,7 @@ dist: distdir FORCE
 distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
+	$(COPY_FILE) --parents ../../resources.qrc $(DISTDIR)/
 	$(COPY_FILE) --parents ../../GameController.h ../../Grid.h ../../Level.h ../../character.h ../../enemy.h ../../mainwindow.h ../../player.h $(DISTDIR)/
 	$(COPY_FILE) --parents ../../GameController.cpp ../../Grid.cpp ../../Level.cpp ../../character.cpp ../../enemy.cpp ../../main.cpp ../../mainwindow.cpp ../../player.cpp $(DISTDIR)/
 	$(COPY_FILE) --parents ../../mainwindow.ui $(DISTDIR)/
@@ -916,15 +925,32 @@ check: first
 
 benchmark: first
 
-compiler_rcc_make_all:
+compiler_rcc_make_all: qrc_resources.cpp
 compiler_rcc_clean:
+	-$(DEL_FILE) qrc_resources.cpp
+qrc_resources.cpp: ../../resources.qrc \
+		../../../Qt/6.11.0/macos/libexec/rcc \
+		../../forms/elf\ warrior.png \
+		../../forms/goblin.png \
+		../../forms/human\ warrior.png \
+		../../forms/human\ fire\ mage.png \
+		../../forms/skeleton.png \
+		../../forms/dwarf\ warrior.png \
+		../../forms/orc.png \
+		../../forms/dwarf\ fire\ mage.png \
+		../../forms/elf\ ice\ mage.png \
+		../../forms/elf\ fire\ mage.png \
+		../../forms/dwarf\ ice\ mage.png \
+		../../forms/human\ ice\ mage.png \
+		../../sounds/step.wav
+	/Users/hamza/Qt/6.11.0/macos/libexec/rcc -name resources --no-zstd ../../resources.qrc -o qrc_resources.cpp
+
 compiler_moc_header_make_all: moc_mainwindow.cpp
 compiler_moc_header_clean:
 	-$(DEL_FILE) moc_mainwindow.cpp
 moc_mainwindow.cpp: ../../mainwindow.h \
 		../../../Qt/6.11.0/macos/lib/QtWidgets.framework/Headers/QMainWindow \
 		../../../Qt/6.11.0/macos/lib/QtGui.framework/Headers/QKeyEvent \
-		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QTimer \
 		../../../Qt/6.11.0/macos/lib/QtWidgets.framework/Headers/QLabel \
 		../../../Qt/6.11.0/macos/lib/QtWidgets.framework/Headers/QGridLayout \
 		../../../Qt/6.11.0/macos/lib/QtWidgets.framework/Headers/QVBoxLayout \
@@ -941,16 +967,18 @@ moc_mainwindow.cpp: ../../mainwindow.h \
 		../../../Qt/6.11.0/macos/lib/QtWidgets.framework/Headers/QGraphicsEllipseItem \
 		../../../Qt/6.11.0/macos/lib/QtWidgets.framework/Headers/QGraphicsTextItem \
 		../../../Qt/6.11.0/macos/lib/QtWidgets.framework/Headers/QGraphicsPixmapItem \
+		../../../Qt/6.11.0/macos/lib/QtMultimedia.framework/Headers/QSoundEffect \
+		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QTimer \
 		../../GameController.h \
 		../../Level.h \
 		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QString \
 		../../Grid.h \
-		../../Enemy.h \
+		../../enemy.h \
 		../../character.h \
 		../../player.h \
 		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QStringList \
 		../../../Qt/6.11.0/macos/libexec/moc
-	/Users/hamza/Qt/6.11.0/macos/libexec/moc $(DEFINES) -D__APPLE__ -D__GNUC__=4 -D__APPLE_CC__ -D__cplusplus=201402L -D__APPLE_CC__=6000 -D__clang__ -D__clang_major__=21 -D__clang_minor__=0 -D__clang_patchlevel__=0 -D__GNUC__=4 -D__GNUC_MINOR__=2 -D__GNUC_PATCHLEVEL__=1 -I/Users/hamza/Qt/6.11.0/macos/mkspecs/macx-clang -I/Users/hamza/projectt -I/Users/hamza/Qt/6.11.0/macos/lib/QtWidgets.framework/Headers -I/Users/hamza/Qt/6.11.0/macos/lib/QtGui.framework/Headers -I/Users/hamza/Qt/6.11.0/macos/lib/QtCore.framework/Headers -I. -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/Users/hamza/Qt/6.11.0/macos/lib ../../mainwindow.h -o moc_mainwindow.cpp
+	/Users/hamza/Qt/6.11.0/macos/libexec/moc $(DEFINES) -D__APPLE__ -D__GNUC__=4 -D__APPLE_CC__ -D__cplusplus=201402L -D__APPLE_CC__=6000 -D__clang__ -D__clang_major__=21 -D__clang_minor__=0 -D__clang_patchlevel__=0 -D__GNUC__=4 -D__GNUC_MINOR__=2 -D__GNUC_PATCHLEVEL__=1 -I/Users/hamza/Qt/6.11.0/macos/mkspecs/macx-clang -I/Users/hamza/projectt -I/Users/hamza/Qt/6.11.0/macos/lib/QtWidgets.framework/Headers -I/Users/hamza/Qt/6.11.0/macos/lib/QtMultimedia.framework/Headers -I/Users/hamza/Qt/6.11.0/macos/lib/QtGui.framework/Headers -I/Users/hamza/Qt/6.11.0/macos/lib/QtNetwork.framework/Headers -I/Users/hamza/Qt/6.11.0/macos/lib/QtCore.framework/Headers -I. -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/Users/hamza/Qt/6.11.0/macos/lib ../../mainwindow.h -o moc_mainwindow.cpp
 
 compiler_moc_objc_header_make_all:
 compiler_moc_objc_header_clean:
@@ -971,7 +999,7 @@ compiler_yacc_impl_make_all:
 compiler_yacc_impl_clean:
 compiler_lex_make_all:
 compiler_lex_clean:
-compiler_clean: compiler_moc_header_clean compiler_uic_clean 
+compiler_clean: compiler_rcc_clean compiler_moc_header_clean compiler_uic_clean 
 
 ####### Compile
 
@@ -979,10 +1007,11 @@ GameController.o: ../../GameController.cpp ../../GameController.h \
 		../../Level.h \
 		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QString \
 		../../Grid.h \
-		../../Enemy.h \
+		../../enemy.h \
 		../../character.h \
 		../../player.h \
 		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QStringList \
+		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QDateTime \
 		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QRandomGenerator
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o GameController.o ../../GameController.cpp
 
@@ -992,7 +1021,7 @@ Grid.o: ../../Grid.cpp ../../Grid.h
 Level.o: ../../Level.cpp ../../Level.h \
 		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QString \
 		../../Grid.h \
-		../../Enemy.h \
+		../../enemy.h \
 		../../character.h \
 		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QRandomGenerator
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o Level.o ../../Level.cpp
@@ -1009,7 +1038,6 @@ enemy.o: ../../enemy.cpp ../../enemy.h \
 main.o: ../../main.cpp ../../mainwindow.h \
 		../../../Qt/6.11.0/macos/lib/QtWidgets.framework/Headers/QMainWindow \
 		../../../Qt/6.11.0/macos/lib/QtGui.framework/Headers/QKeyEvent \
-		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QTimer \
 		../../../Qt/6.11.0/macos/lib/QtWidgets.framework/Headers/QLabel \
 		../../../Qt/6.11.0/macos/lib/QtWidgets.framework/Headers/QGridLayout \
 		../../../Qt/6.11.0/macos/lib/QtWidgets.framework/Headers/QVBoxLayout \
@@ -1026,11 +1054,13 @@ main.o: ../../main.cpp ../../mainwindow.h \
 		../../../Qt/6.11.0/macos/lib/QtWidgets.framework/Headers/QGraphicsEllipseItem \
 		../../../Qt/6.11.0/macos/lib/QtWidgets.framework/Headers/QGraphicsTextItem \
 		../../../Qt/6.11.0/macos/lib/QtWidgets.framework/Headers/QGraphicsPixmapItem \
+		../../../Qt/6.11.0/macos/lib/QtMultimedia.framework/Headers/QSoundEffect \
+		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QTimer \
 		../../GameController.h \
 		../../Level.h \
 		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QString \
 		../../Grid.h \
-		../../Enemy.h \
+		../../enemy.h \
 		../../character.h \
 		../../player.h \
 		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QStringList \
@@ -1040,7 +1070,6 @@ main.o: ../../main.cpp ../../mainwindow.h \
 mainwindow.o: ../../mainwindow.cpp ../../mainwindow.h \
 		../../../Qt/6.11.0/macos/lib/QtWidgets.framework/Headers/QMainWindow \
 		../../../Qt/6.11.0/macos/lib/QtGui.framework/Headers/QKeyEvent \
-		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QTimer \
 		../../../Qt/6.11.0/macos/lib/QtWidgets.framework/Headers/QLabel \
 		../../../Qt/6.11.0/macos/lib/QtWidgets.framework/Headers/QGridLayout \
 		../../../Qt/6.11.0/macos/lib/QtWidgets.framework/Headers/QVBoxLayout \
@@ -1057,11 +1086,13 @@ mainwindow.o: ../../mainwindow.cpp ../../mainwindow.h \
 		../../../Qt/6.11.0/macos/lib/QtWidgets.framework/Headers/QGraphicsEllipseItem \
 		../../../Qt/6.11.0/macos/lib/QtWidgets.framework/Headers/QGraphicsTextItem \
 		../../../Qt/6.11.0/macos/lib/QtWidgets.framework/Headers/QGraphicsPixmapItem \
+		../../../Qt/6.11.0/macos/lib/QtMultimedia.framework/Headers/QSoundEffect \
+		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QTimer \
 		../../GameController.h \
 		../../Level.h \
 		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QString \
 		../../Grid.h \
-		../../Enemy.h \
+		../../enemy.h \
 		../../character.h \
 		../../player.h \
 		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QStringList \
@@ -1072,7 +1103,10 @@ mainwindow.o: ../../mainwindow.cpp ../../mainwindow.h \
 		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QCoreApplication \
 		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QDir \
 		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QFileInfo \
-		../../../Qt/6.11.0/macos/lib/QtGui.framework/Headers/QPixmap
+		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QFile \
+		../../../Qt/6.11.0/macos/lib/QtGui.framework/Headers/QPixmap \
+		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QSettings \
+		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QUrl
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o mainwindow.o ../../mainwindow.cpp
 
 player.o: ../../player.cpp ../../player.h \
@@ -1080,6 +1114,9 @@ player.o: ../../player.cpp ../../player.h \
 		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QString \
 		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QStringList
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o player.o ../../player.cpp
+
+qrc_resources.o: qrc_resources.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o qrc_resources.o qrc_resources.cpp
 
 moc_mainwindow.o: moc_mainwindow.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_mainwindow.o moc_mainwindow.cpp

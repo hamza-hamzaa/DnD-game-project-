@@ -40,8 +40,10 @@ int Character::getAttackPower() const { return attackPower; }
 int Character::getDefense() const { return defense; }
 void Character::addAttack(int amount) { attackPower += amount; }
 void Character::addDefense(int amount) { defense += amount; }
-int Character::getRow(){return posX;}
-int Character::getCol(){return posY;}
+void Character::setAttackPower(int value) { attackPower = value; }
+void Character::setDefense(int value) { defense = value; }
+int Character::getRow() const { return posX; }
+int Character::getCol() const { return posY; }
 void Character::setPos(int x, int y){
     posX=x;
     posY=y;

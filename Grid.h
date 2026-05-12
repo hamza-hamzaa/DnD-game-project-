@@ -6,21 +6,25 @@
 
 using namespace std;
 struct Cell{
-    bool hasEnemy=false;
-    bool hasPotion=false;
-    bool hasEquipment=false;
-    bool hasTrap=false;
-    bool visited=false;
-    bool wallTop= false;
-    bool wallBottom=false;
-    bool wallLeft=false;
-    bool wallRight=false;
+    bool hasEnemy = false;
+    bool hasPotion = false;
+    bool hasEquipment = false;
+    bool hasVisibleTrap = false;
+    bool hasInvisibleTrap = false;
+    bool hasKey = false;
+    bool visited = false;
+    bool wallTop = false;
+    bool wallBottom = false;
+    bool wallLeft = false;
+    bool wallRight = false;
 
     void clearEvent() {
         hasEnemy = false;
         hasPotion = false;
         hasEquipment = false;
-        hasTrap = false;
+        hasVisibleTrap = false;
+        hasInvisibleTrap = false;
+        hasKey = false;
     }
 };
 
@@ -37,6 +41,7 @@ public:
     const Cell& getCell(int r, int c) const;
     bool isValidMove(int r, int c) const;
     bool isInside(int r, int c) const;
+    bool isWallBetween(int r1, int c1, int r2, int c2) const;
     int getRows() const;
     int getCols() const;
 };

@@ -33,8 +33,10 @@ public:
     int getDefense() const;
     void addAttack(int amount);
     void addDefense(int amount);
-    int getRow();
-    int getCol();
+    void setAttackPower(int value);
+    void setDefense(int value);
+    int getRow() const;
+    int getCol() const;
     void setPos(int x, int y);
 };
 

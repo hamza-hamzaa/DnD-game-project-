@@ -6,8 +6,37 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QFileInfo>
+#include <QFile>
 #include <QPixmap>
+#include <QTimer>
+#include <QSettings>
+#include <QUrl>
 #include <algorithm>
+
+QString MainWindow::formsDirectory() const
+{
+    const QString appForms = QDir(QCoreApplication::applicationDirPath()).filePath("forms");
+    if (QFileInfo::exists(appForms)) {
+        return appForms;
+    }
+    const QString cwdForms = QDir(QDir::currentPath()).filePath("forms");
+    if (QFileInfo::exists(cwdForms)) {
+        return cwdForms;
+    }
+    return appForms;
+}
+
+QString MainWindow::defaultSaveFilePath() const
+{
+    return QDir(QDir::currentPath()).absoluteFilePath(QStringLiteral("dungeon_save.txt"));
+}
+
+void MainWindow::playUiBlip()
+{
+    if (uiBlip.isLoaded()) {
+        uiBlip.play();
+    }
+}
 
 QString MainWindow::findPlayerSpritePath() const
 {
@@ -15,7 +44,7 @@ QString MainWindow::findPlayerSpritePath() const
         return QString();
     }
 
-    const QString formsDir = QDir("/Users/hamza/projectt").absoluteFilePath("forms");
+    const QString formsDir = formsDirectory();
     const QString race = player->getRace().trimmed();
     const QString style = player->getStyle().trimmed();
 
@@ -51,6 +80,11 @@ QString MainWindow::findPlayerSpritePath() const
         return QString();
     }
 
+    const QString qrcPath = QStringLiteral(":/forms/") + fileName;
+    if (!QPixmap(qrcPath).isNull()) {
+        return qrcPath;
+    }
+
     const QString spritePath = QDir(formsDir).absoluteFilePath(fileName);
     if (QFileInfo::exists(spritePath)) {
         return spritePath;
@@ -60,91 +94,37 @@ QString MainWindow::findPlayerSpritePath() const
 }
 QString MainWindow::findEnemySpritePath(const Enemy& enemy) const
 {
-    const QString formsDir = QDir("/Users/hamza/projectt").absoluteFilePath("forms");
     const QString type = enemy.getType().trimmed();
 
-    QString fileName;
-
-    if (type == "Goblin") {
-        fileName = "goblin.png";
-    } else if (type == "Orc") {
-        fileName = "orc.png";
-    } else if (type == "Skeleton") {
-        fileName = "skeleton.png";
+    if (type == QStringLiteral("Goblin")) {
+        return QStringLiteral(":/forms/goblin.png");
     }
-
-    if (fileName.isEmpty()) {
-        return QString();
+    if (type == QStringLiteral("Orc")) {
+        return QStringLiteral(":/forms/orc.png");
     }
-
-    const QString spritePath = QDir(formsDir).absoluteFilePath(fileName);
-    if (QFileInfo::exists(spritePath)) {
-        return spritePath;
+    if (type == QStringLiteral("Skeleton")) {
+        return QStringLiteral(":/forms/skeleton.png");
+    }
+    if (type == QStringLiteral("Lich")) {
+        return QStringLiteral(":/forms/skeleton.png");
     }
 
     return QString();
 }
 
-QVector<MainWindow::WallSegment> MainWindow::wallSegmentsForGrid(int rows, int cols) const
+// ─────────────────────────────────────────────
+//  Constructor / Destructor
+// ─────────────────────────────────────────────
+
+MainWindow::MainWindow(QWidget *parent)
+    : QMainWindow(parent)
 {
-    QVector<WallSegment> validSegments;
+    uiBlip.setSource(QUrl(QStringLiteral("qrc:/sounds/step.wav")));
+    uiBlip.setVolume(0.35f);
 
-    if (!gc || gc->getLevelNumber() != 1 || rows != 6 || cols != 6) {
-        return validSegments;
-    }
+    connect(&hudTimer, &QTimer::timeout, this, &MainWindow::onHudTick);
+    hudTimer.start(200);
 
-    const QVector<WallSegment> layout = {
-        {0, 1, 0, 2},
-        {0, 3, 0, 4},
-        {1, 0, 2, 0},
-        {1, 2, 1, 3},
-        {1, 4, 2, 4},
-        {2, 1, 3, 1},
-        {2, 2, 2, 3},
-        {2, 4, 2, 5},
-        {3, 0, 3, 1},
-        {3, 3, 4, 3},
-        {4, 1, 4, 2},
-        {4, 4, 5, 4},
-        {5, 2, 5, 3}
-    };
-
-    for (int i = 0; i < layout.size(); i++) {
-        validSegments.push_back(layout[i]);
-    }
-
-    return validSegments;
-}
-
-bool MainWindow::isMoveBlockedByWall(int fromRow, int fromCol, int toRow, int toCol) const
-{
-    if (!gc || !gc->getLevel()) {
-        return false;
-    }
-
-    Grid& grid = gc->getLevel()->getGrid();
-    const QVector<WallSegment> segments = wallSegmentsForGrid(grid.getRows(), grid.getCols());
-    for (int i = 0; i < segments.size(); i++) {
-        const WallSegment& segment = segments[i];
-        const bool sameDirection = segment.rowA == fromRow && segment.colA == fromCol
-                                   && segment.rowB == toRow && segment.colB == toCol;
-        const bool oppositeDirection = segment.rowA == toRow && segment.colA == toCol
-                                       && segment.rowB == fromRow && segment.colB == fromCol;
-        if (sameDirection || oppositeDirection) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-    // ─────────────────────────────────────────────
-    //  Constructor / Destructor
-    // ─────────────────────────────────────────────
-
-    MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent),animTimer(new QTimer(this))
-{
     setWindowTitle("Dungeon Realms");
     setFixedSize(800, 650);
 
@@ -168,10 +148,6 @@ bool MainWindow::isMoveBlockedByWall(int fromRow, int fromCol, int toRow, int to
     stack->addWidget(endPage);     // index 3
 
     stack->setCurrentIndex(0);
-
-    // enemy animation tick: every 600 ms enemies "pulse"
-    connect(animTimer, &QTimer::timeout, this, &MainWindow::tickEnemyAnim);
-    animTimer->start(600);
 }
 
 MainWindow::~MainWindow()
@@ -327,9 +303,13 @@ void MainWindow::buildSelectPage()
     root->addLayout(styleRow);
 
     // class description hint
-    QLabel* hint = new QLabel("Warrior: tanky melee  |  Fire Mage: high damage  |  Ice Mage: balanced");
+    QLabel* hint = new QLabel(
+        "Warrior / Fire Mage / Ice Mage — each plays differently.\n"
+        "Racial ability (R): Human heals, Elf reveals hidden traps, Dwarf gains temporary armor. "
+        "It recharges after a random number of moves (shown in HUD after you start).\n"
+        "Find the hidden key, defeat all enemies, then reach the exit. Lower run time = better score.");
     hint->setAlignment(Qt::AlignCenter);
-    hint->setStyleSheet("color: #6a5840; font-size: 12px;");
+    hint->setStyleSheet("color: #6a5840; font-size: 11px; max-width: 520px;");
     root->addWidget(hint);
 
     root->addSpacing(16);
@@ -376,6 +356,27 @@ void MainWindow::buildGamePage()
         "font-family: 'Georgia', serif;"
         );
     hud->addWidget(levelLabel);
+
+    keyLabel = new QLabel("Key: No");
+    keyLabel->setStyleSheet(
+        "color: #c8b88a; font-size: 15px; font-weight: bold;"
+        "font-family: 'Georgia', serif;"
+        );
+    hud->addWidget(keyLabel);
+
+    timeLabel = new QLabel("Time: 0.0s");
+    timeLabel->setStyleSheet(
+        "color: #9ad8ff; font-size: 15px; font-weight: bold;"
+        "font-family: 'Georgia', serif;"
+        );
+    hud->addWidget(timeLabel);
+
+    enemiesLabel = new QLabel("Enemies: 0");
+    enemiesLabel->setStyleSheet(
+        "color: #c8b0e8; font-size: 15px; font-weight: bold;"
+        "font-family: 'Georgia', serif;"
+        );
+    hud->addWidget(enemiesLabel);
 
     hud->addStretch();
 
@@ -445,7 +446,24 @@ void MainWindow::buildGamePage()
         "QPushButton:hover { background: #3a2020; border-color: #e87060; }"
         );
     connect(restartBtn, &QPushButton::clicked, this, &MainWindow::onRestartClicked);
-    root->addWidget(restartBtn);
+
+    saveGameBtn = new QPushButton("Save");
+    saveGameBtn->setFixedHeight(32);
+    saveGameBtn->setCursor(Qt::PointingHandCursor);
+    saveGameBtn->setStyleSheet(restartBtn->styleSheet());
+    connect(saveGameBtn, &QPushButton::clicked, this, &MainWindow::onSaveGameClicked);
+
+    loadGameBtn = new QPushButton("Load");
+    loadGameBtn->setFixedHeight(32);
+    loadGameBtn->setCursor(Qt::PointingHandCursor);
+    loadGameBtn->setStyleSheet(restartBtn->styleSheet());
+    connect(loadGameBtn, &QPushButton::clicked, this, &MainWindow::onLoadGameClicked);
+
+    QHBoxLayout* bottomRow = new QHBoxLayout;
+    bottomRow->addWidget(restartBtn);
+    bottomRow->addWidget(saveGameBtn);
+    bottomRow->addWidget(loadGameBtn);
+    root->addLayout(bottomRow);
 }
 
 void MainWindow::buildEndPage()
@@ -527,7 +545,6 @@ void MainWindow::onSelectClicked()
     QString race  = raceBox->currentText();
     QString style = styleBox->currentText();
 
-    // create the correct player subclass based on chosen style
     delete player;
     if (style == "Warrior") {
         player = new Warrior(name, race);
@@ -537,18 +554,30 @@ void MainWindow::onSelectClicked()
         player = new IceMage(name, race);
     }
 
-    // create game controller and start
     delete gc;
     gc = new GameController(player);
     gc->startGame();
 
-    // build the visual grid for level 1
+    QSettings qs;
+    if (!qs.value(QStringLiteral("tutorial/dungeon_v1"), false).toBool()) {
+        QMessageBox::information(
+            this,
+            QStringLiteral("How to play"),
+            QStringLiteral(
+                "Defeat every enemy, find the hidden key (same tile as a normal floor), then stand on the exit.\n"
+                "Press R to use your race ability when the HUD shows R: READY (recharges after N moves; N is random each new run).\n"
+                "Enemy turns resolve right after yours. Save / Load uses dungeon_save.txt in the working directory."));
+        qs.setValue(QStringLiteral("tutorial/dungeon_v1"), true);
+    }
+
     drawGrid();
     redrawEntities();
     updateHUD();
-    showLog("You enter the dungeon.  Move with arrow keys or WASD.");
+    showLog(QStringLiteral("You enter the dungeon. WASD / arrows to move. R = racial when ready. "
+                           "Racial cooldown this run: %1 moves.")
+                .arg(player->getRacialMovePeriod()));
 
-    stack->setCurrentIndex(2); // show game page
+    stack->setCurrentIndex(2);
     gamePage->setFocus();
 }
 
@@ -572,42 +601,94 @@ void MainWindow::onRestartClicked()
 void MainWindow::keyPressEvent(QKeyEvent* event)
 {
     if (stack->currentIndex() != 2 || !gc || !player) {
-        //QMainWindow::keyPressEvent(event);
+        QMainWindow::keyPressEvent(event);
         return;
     }
 
-    int dx = 0, dy = 0;
+    if (event->key() == Qt::Key_R) {
+        const QString msg = gc->tryRacialAbility();
+        if (!msg.isEmpty()) {
+            drawGrid();
+            redrawEntities();
+            updateHUD();
+            showLog(msg);
+            playUiBlip();
+        }
+        QTimer::singleShot(800, this, &MainWindow::checkEndConditions);
+        return;
+    }
+
+    int dx = 0;
+    int dy = 0;
     QString dir;
 
     switch (event->key()) {
-    case Qt::Key_Up:    case Qt::Key_W:  dx = -1; dir = "north"; break;
-    case Qt::Key_Down:  case Qt::Key_S:  dx =  1; dir = "south"; break;
-    case Qt::Key_Left:  case Qt::Key_A:  dy = -1; dir = "west";  break;
-    case Qt::Key_Right: case Qt::Key_D:  dy =  1; dir = "east";  break;
+    case Qt::Key_Up:
+    case Qt::Key_W:
+        dx = -1;
+        dir = QStringLiteral("north");
+        break;
+    case Qt::Key_Down:
+    case Qt::Key_S:
+        dx = 1;
+        dir = QStringLiteral("south");
+        break;
+    case Qt::Key_Left:
+    case Qt::Key_A:
+        dy = -1;
+        dir = QStringLiteral("west");
+        break;
+    case Qt::Key_Right:
+    case Qt::Key_D:
+        dy = 1;
+        dir = QStringLiteral("east");
+        break;
     default:
         QMainWindow::keyPressEvent(event);
         return;
     }
 
-    const int currentRow = player->getRow();
-    const int currentCol = player->getCol();
-    const int newRow = currentRow + dx;
-    const int newCol = currentCol + dy;
-
-    if (gc->getLevel() && isMoveBlockedByWall(currentRow, currentCol, newRow, newCol)) {
-        showLog("A wall blocks your path.");
-        return;
-    }
-
-    QString msg = gc->movePlayer(dx, dy);
+    const QString msg = gc->resolvePlayerTurn(dx, dy);
     drawGrid();
     redrawEntities();
     updateHUD();
 
+    if (gc->hasPendingEnemyPhase()) {
+        showLog(QStringLiteral("Enemy turn..."));
+        QTimer::singleShot(320, this, [this, msg, dir]() {
+            const QString enemyLog = gc->resolveEnemyTurn();
+            drawGrid();
+            redrawEntities();
+            updateHUD();
+            QString merged = msg;
+            if (!enemyLog.isEmpty()) {
+                if (!merged.isEmpty()) {
+                    merged += QLatin1Char('\n');
+                }
+                merged += enemyLog;
+            }
+            if (!merged.isEmpty()) {
+                showLog(merged);
+                playUiBlip();
+            } else {
+                showLog(QStringLiteral("You move ") + dir + QLatin1Char('.'));
+                playUiBlip();
+            }
+            QTimer::singleShot(800, this, &MainWindow::checkEndConditions);
+        });
+        return;
+    }
+
     if (!msg.isEmpty()) {
-        showLog(msg);
+        if (msg == QStringLiteral("Blocked!")) {
+            showLog(QStringLiteral("A wall blocks your path."));
+        } else {
+            showLog(msg);
+            playUiBlip();
+        }
     } else {
-        showLog("You move " + dir + ".");
+        showLog(QStringLiteral("You move ") + dir + QLatin1Char('.'));
+        playUiBlip();
     }
 
     QTimer::singleShot(800, this, &MainWindow::checkEndConditions);
@@ -626,9 +707,11 @@ void MainWindow::drawGrid()
     playerSprite  = nullptr;
     playerIcon    = nullptr;
 
-    Grid& grid = gc->getLevel()->getGrid();      // NOTE: expose getLevel() in GameController
-    int rows = grid.getRows();
-    int cols = grid.getCols();
+    Grid& grid = gc->getLevel()->getGrid();
+    const int rows = grid.getRows();
+    const int cols = grid.getCols();
+
+    cellSize = std::clamp(560 / std::max(rows, cols), 28, 60);
 
     cellItems.resize(rows);
 
@@ -637,13 +720,17 @@ void MainWindow::drawGrid()
         for (int c = 0; c < cols; c++) {
             Cell& cell = grid.getCell(r, c);
 
-            // pick tile color
-            QColor tileColor = QColor(55, 45, 80);     // normal floor
-            if (cell.hasPotion) {
-                tileColor = QColor(35, 120, 55);       // potion -- green
+            const bool isExit = (r == rows - 1 && c == cols - 1);
+
+            QColor tileColor = QColor(55, 45, 80);
+            if (isExit) {
+                tileColor = QColor(90, 70, 30);
             }
-            if (cell.hasTrap) {
-                tileColor = QColor(60, 20, 10);        // trap -- dark red
+            if (cell.hasPotion) {
+                tileColor = QColor(35, 120, 55);
+            }
+            if (cell.hasVisibleTrap) {
+                tileColor = QColor(60, 20, 10);
             }
 
             QGraphicsRectItem* rect = new QGraphicsRectItem(
@@ -654,44 +741,61 @@ void MainWindow::drawGrid()
             scene->addItem(rect);
             cellItems[r][c] = rect;
 
-            if (cell.hasTrap) {
-                QGraphicsTextItem* lbl = scene->addText("⚠");
+            if (cell.hasVisibleTrap) {
+                QGraphicsTextItem* lbl = scene->addText(QStringLiteral("⚠"));
                 lbl->setDefaultTextColor(QColor(220, 80, 40));
                 lbl->setFont(QFont("Segoe UI Emoji", 16));
                 lbl->setPos(c * cellSize + 14, r * cellSize + 10);
             }
+            if (isExit) {
+                QGraphicsTextItem* ex = scene->addText(QStringLiteral("⛩"));
+                ex->setDefaultTextColor(QColor(255, 210, 120));
+                ex->setFont(QFont("Segoe UI Emoji", 14));
+                ex->setPos(c * cellSize + 16, r * cellSize + 10);
+            }
         }
     }
-    int wt = 6;
-    QColor wallColor = QColor(180, 150, 220);
 
-    const QVector<WallSegment> segments = wallSegmentsForGrid(rows, cols);
-    for (int i = 0; i < segments.size(); i++) {
-        const WallSegment& segment = segments[i];
-        const bool verticalDivider = segment.rowA == segment.rowB;
-        const int minRow = std::min(segment.rowA, segment.rowB);
-        const int minCol = std::min(segment.colA, segment.colB);
+    const int wt = 6;
+    const QColor wallColor(180, 150, 220);
 
-        QGraphicsRectItem* wall = nullptr;
-        if (verticalDivider) {
-            const int x = (minCol + 1) * cellSize - wt / 2;
-            const int y = minRow * cellSize;
-            wall = new QGraphicsRectItem(x, y, wt, cellSize);
-        } else {
-            const int x = minCol * cellSize;
-            const int y = (minRow + 1) * cellSize - wt / 2;
-            wall = new QGraphicsRectItem(x, y, cellSize, wt);
+    for (int r = 0; r < rows; r++) {
+        for (int c = 0; c < cols; c++) {
+            const Cell& cell = grid.getCell(r, c);
+            if (r == 0 && cell.wallTop) {
+                auto* wall = new QGraphicsRectItem(
+                    c * cellSize, r * cellSize - wt / 2.0, cellSize, wt);
+                wall->setBrush(QBrush(wallColor));
+                wall->setPen(Qt::NoPen);
+                scene->addItem(wall);
+            }
+            if (c == 0 && cell.wallLeft) {
+                auto* wall = new QGraphicsRectItem(
+                    c * cellSize - wt / 2.0, r * cellSize, wt, cellSize);
+                wall->setBrush(QBrush(wallColor));
+                wall->setPen(Qt::NoPen);
+                scene->addItem(wall);
+            }
+            if (cell.wallRight) {
+                auto* wall = new QGraphicsRectItem(
+                    (c + 1) * cellSize - wt / 2.0, r * cellSize, wt, cellSize);
+                wall->setBrush(QBrush(wallColor));
+                wall->setPen(Qt::NoPen);
+                scene->addItem(wall);
+            }
+            if (cell.wallBottom) {
+                auto* wall = new QGraphicsRectItem(
+                    c * cellSize, (r + 1) * cellSize - wt / 2.0, cellSize, wt);
+                wall->setBrush(QBrush(wallColor));
+                wall->setPen(Qt::NoPen);
+                scene->addItem(wall);
+            }
         }
-
-        wall->setBrush(QBrush(wallColor));
-        wall->setPen(Qt::NoPen);
-        scene->addItem(wall);
     }
 
-    // fit scene in view
     scene->setSceneRect(0, 0, cols * cellSize, rows * cellSize);
     view->setScene(scene);
-    view->centerOn(0, 0);
+    view->centerOn(scene->sceneRect().center());
 }
 
 // ─────────────────────────────────────────────
@@ -808,6 +912,35 @@ void MainWindow::updateHUD()
     hpLabel->setText(QString::number(hp) + " / " + QString::number(maxHp));
 
     levelLabel->setText("Level " + QString::number(gc->getLevelNumber()));
+
+    if (player->getHasLevelKey()) {
+        keyLabel->setText("Key: Yes");
+        keyLabel->setStyleSheet(
+            "color: #ffd878; font-size: 15px; font-weight: bold;"
+            "font-family: 'Georgia', serif;"
+            );
+    } else {
+        keyLabel->setText("Key: No");
+        keyLabel->setStyleSheet(
+            "color: #c8b88a; font-size: 15px; font-weight: bold;"
+            "font-family: 'Georgia', serif;"
+            );
+    }
+
+    const double sec = gc->elapsedMs() / 1000.0;
+    timeLabel->setText(QStringLiteral("Time: %1s").arg(QString::number(sec, 'f', 1)));
+
+    int enemyCount = 0;
+    if (gc->getLevel()) {
+        enemyCount = static_cast<int>(gc->getLevel()->getEnemies().size());
+    }
+    QString rLine;
+    if (player->isRacialAbilityReady()) {
+        rLine = QStringLiteral("R: READY");
+    } else {
+        rLine = QStringLiteral("R: %1/%2").arg(player->getMovesTowardRacial()).arg(player->getRacialMovePeriod());
+    }
+    enemiesLabel->setText(QStringLiteral("Enemies: %1   %2").arg(enemyCount).arg(rLine));
 }
 
 // ─────────────────────────────────────────────
@@ -840,7 +973,13 @@ void MainWindow::checkEndConditions()
     }
 
     if (gc->checkWin()) {
-        endMsg->setText("⚔  VICTORY!  ⚔\n\nWell done, " + player->getName() + "!\nYou reached the final exit.");
+        const double scoreSec = gc->victoryTimeMs() > 0
+            ? gc->victoryTimeMs() / 1000.0
+            : gc->elapsedMs() / 1000.0;
+        endMsg->setText(
+            QStringLiteral("⚔  VICTORY!  ⚔\n\nWell done, ") + player->getName()
+            + QStringLiteral("!\nFinal run time (score): ") + QString::number(scoreSec, 'f', 1)
+            + QStringLiteral(" s\n(Lower is better.)"));
         endRestartBtn->setText("PLAY AGAIN");
         endMsg->setStyleSheet(
             "color: #e8c96a; font-size: 28px; font-weight: bold;"
@@ -849,17 +988,43 @@ void MainWindow::checkEndConditions()
         stack->setCurrentIndex(3);
     }
 }
-// ─────────────────────────────────────────────
-//  Enemy animation tick (visual pulse effect)
-// ─────────────────────────────────────────────
 
-void MainWindow::tickEnemyAnim()
+void MainWindow::onHudTick()
 {
-    static bool visible = true;
-
-    for (int i = 0; i < enemySprites.size(); i++) {
-        enemySprites[i]->setOpacity(visible ? 1.0 : 0.7);
+    if (stack->currentIndex() == 2 && gc && player) {
+        updateHUD();
     }
+}
 
-    visible = !visible;
+void MainWindow::onSaveGameClicked()
+{
+    if (!gc || !player) {
+        return;
+    }
+    const QString path = defaultSaveFilePath();
+    if (gc->saveGameToFile(path)) {
+        showLog(QStringLiteral("Game saved to ") + path);
+        QMessageBox::information(this, QStringLiteral("Saved"), QStringLiteral("Progress written to:\n") + path);
+    } else {
+        QMessageBox::warning(this, QStringLiteral("Save failed"), QStringLiteral("Could not write save file."));
+    }
+}
+
+void MainWindow::onLoadGameClicked()
+{
+    QString err;
+    Player* newPlayer = player;
+    GameController* newGc = gc;
+    const QString path = defaultSaveFilePath();
+    if (!GameController::loadGameFromFile(path, newPlayer, newGc, err)) {
+        QMessageBox::warning(this, QStringLiteral("Load failed"), err);
+        return;
+    }
+    player = newPlayer;
+    gc = newGc;
+    drawGrid();
+    redrawEntities();
+    updateHUD();
+    showLog(QStringLiteral("Loaded game from ") + path);
+    gamePage->setFocus();
 }

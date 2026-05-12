@@ -3,7 +3,6 @@
 
 #include <QMainWindow>
 #include <QKeyEvent>
-#include <QTimer>
 #include <QLabel>
 #include <QGridLayout>
 #include <QVBoxLayout>
@@ -20,6 +19,8 @@
 #include <QGraphicsEllipseItem>
 #include <QGraphicsTextItem>
 #include <QGraphicsPixmapItem>
+#include <QSoundEffect>
+#include <QTimer>
 #include "GameController.h"
 #include "player.h"
 
@@ -38,16 +39,11 @@ private slots:
     void onStartClicked();
     void onSelectClicked();
     void onRestartClicked();
-    void tickEnemyAnim();
+    void onHudTick();
+    void onSaveGameClicked();
+    void onLoadGameClicked();
 
 private:
-    struct WallSegment {
-        int rowA;
-        int colA;
-        int rowB;
-        int colB;
-    };
-
     // -- pages --
     QStackedWidget* stack;
 
@@ -68,9 +64,14 @@ private:
     QGraphicsScene* scene;
     QLabel* hpLabel;
     QLabel* levelLabel;
+    QLabel* keyLabel;
+    QLabel* timeLabel;
+    QLabel* enemiesLabel;
     QLabel* logLabel;
     QProgressBar* hpBar;
     QPushButton* restartBtn;
+    QPushButton* saveGameBtn;
+    QPushButton* loadGameBtn;
     // page 3: game over / victory
     QWidget* endPage;
     QLabel*endMsg;
@@ -79,10 +80,11 @@ private:
     // -- game objects --
     Player* player = nullptr;
     GameController* gc = nullptr;
-    QTimer* animTimer;
+    QTimer hudTimer;
+    QSoundEffect uiBlip;
 
     // -- grid rendering --
-    int cellSize = 80;
+    int cellSize = 60;
     QVector<QVector<QGraphicsRectItem*>> cellItems; // visual tiles
     QGraphicsPixmapItem* playerSprite=nullptr;
     QVector<QGraphicsPixmapItem*> enemySprites;
@@ -99,23 +101,11 @@ private:
     void updateHUD();
     void showLog(const QString& msg);
     void checkEndConditions();
-    QVector<WallSegment> wallSegmentsForGrid(int rows, int cols) const;
-    bool isMoveBlockedByWall(int fromRow, int fromCol, int toRow, int toCol) const;
+    QString formsDirectory() const;
+    QString defaultSaveFilePath() const;
     QString findPlayerSpritePath() const;
     QString findEnemySpritePath(const Enemy& enemy) const;
+    void playUiBlip();
 };
 
 #endif // MAINWINDOW_H
-
-
-
-
-
-
-
-
-
-
-
-
-

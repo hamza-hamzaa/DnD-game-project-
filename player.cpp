@@ -1,9 +1,12 @@
 #include "player.h"
+#include <algorithm>
 
 Player::Player(const QString& name, const QString& race, const QString& style, int health, int attackPower, int defense)
     : Character(name, health, attackPower, defense,0,0), race(race), style(style), potions(2), specialCharges(2){}
 QString Player::getRace() const { return race; }
 QString Player::getStyle() const { return style; }
+bool Player::getHasLevelKey() const { return hasLevelKey; }
+void Player::setHasLevelKey(bool value) { hasLevelKey = value; }
 int Player::getPotions() const { return potions; }
 int Player::getSpecialCharges() const { return specialCharges; }
 
@@ -24,6 +27,74 @@ bool Player::usePotion(QString& log) {
 
 QString Player::attackText() const {
     return name + " attacks";
+}
+
+void Player::setRacialMovePeriod(int n)
+{
+    racialMovePeriod = std::max(3, n);
+}
+
+int Player::getRacialMovePeriod() const
+{
+    return racialMovePeriod;
+}
+
+int Player::getMovesTowardRacial() const
+{
+    return movesTowardRacial;
+}
+
+void Player::onSuccessfulMove()
+{
+    ++movesTowardRacial;
+    if (dwarfArmorTurnsRemaining > 0) {
+        --dwarfArmorTurnsRemaining;
+        if (dwarfArmorTurnsRemaining == 0 && dwarfArmorDefenseBonus > 0) {
+            addDefense(-dwarfArmorDefenseBonus);
+            dwarfArmorDefenseBonus = 0;
+        }
+    }
+}
+
+bool Player::isRacialAbilityReady() const
+{
+    return movesTowardRacial >= racialMovePeriod;
+}
+
+void Player::resetRacialProgressAfterUse()
+{
+    movesTowardRacial = 0;
+}
+
+int Player::getDwarfArmorTurnsRemaining() const
+{
+    return dwarfArmorTurnsRemaining;
+}
+
+void Player::applyDwarfStoneblood(int armorBonus, int turns)
+{
+    if (dwarfArmorDefenseBonus > 0) {
+        addDefense(-dwarfArmorDefenseBonus);
+    }
+    dwarfArmorDefenseBonus = armorBonus;
+    dwarfArmorTurnsRemaining = turns;
+    addDefense(armorBonus);
+}
+
+int Player::getDwarfArmorDefenseBonus() const
+{
+    return dwarfArmorDefenseBonus;
+}
+
+void Player::setMovesTowardRacialForLoad(int v)
+{
+    movesTowardRacial = v;
+}
+
+void Player::restoreDwarfBuffForLoad(int bonus, int turns)
+{
+    dwarfArmorDefenseBonus = bonus;
+    dwarfArmorTurnsRemaining = turns;
 }
 
 

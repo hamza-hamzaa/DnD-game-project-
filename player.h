@@ -10,7 +10,12 @@ protected:
     QString style;
     int potions;
     int specialCharges;
+    bool hasLevelKey = false;
 
+    int racialMovePeriod = 6;
+    int movesTowardRacial = 0;
+    int dwarfArmorTurnsRemaining = 0;
+    int dwarfArmorDefenseBonus = 0;
 
 public:
     Player(const QString& name, const QString& race, const QString& style, int health, int attackPower, int defense = 0);
@@ -18,8 +23,22 @@ public:
 
     QString getRace() const;
     QString getStyle() const;
+    bool getHasLevelKey() const;
+    void setHasLevelKey(bool value);
     int getPotions() const;
     int getSpecialCharges() const;
+
+    void setRacialMovePeriod(int n);
+    int getRacialMovePeriod() const;
+    int getMovesTowardRacial() const;
+    void onSuccessfulMove();
+    bool isRacialAbilityReady() const;
+    void resetRacialProgressAfterUse();
+    int getDwarfArmorTurnsRemaining() const;
+    int getDwarfArmorDefenseBonus() const;
+    void setMovesTowardRacialForLoad(int v);
+    void restoreDwarfBuffForLoad(int bonus, int turns);
+    void applyDwarfStoneblood(int armorBonus, int turns);
 
     void addPotion(int count = 1);
     bool usePotion(QString& log);
