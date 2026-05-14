@@ -151,11 +151,9 @@ void Level::generateLevelInternal(QRandomGenerator& rng) {
         }
     }
 
-    std::vector<std::vector<bool>> vis(static_cast<size_t>(Rows),
-                                       std::vector<bool>(static_cast<size_t>(Cols), false));
+    std::vector<std::vector<bool>> vis(static_cast<size_t>(Rows),std::vector<bool>(static_cast<size_t>(Cols), false));
     dfsCarve(grid, Rows, Cols, 0, 0, vis, rng);
     addMazeLoops(grid, Rows, Cols, rng);
-
     grid.getCell(0, 0).clearEvent();
     grid.getCell(Rows - 1, Cols - 1).clearEvent();
 

@@ -14,7 +14,7 @@ void buildMoveOrderForEnemy(const QString& typeIn, int rowDiff, int colDiff,std:
     const QString type =typeIn.trimmed();
     outDirs.clear();
     //checks monster types as they will have different movement patterrn
-    if (type == QStringLiteral("Orc")) {
+    if (type ==  "Orc") {
 
         if (colDiff != 0) {
             outDirs.push_back({0, colDiff > 0 ? 1 : -1});
@@ -29,7 +29,7 @@ void buildMoveOrderForEnemy(const QString& typeIn, int rowDiff, int colDiff,std:
         outDirs.push_back({0, -1});
         outDirs.push_back({0, 1});
     }
-    else if (type == QStringLiteral("Skeleton")) {
+    else if (type ==  "Skeleton") {
         outDirs = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
         std::shuffle(outDirs.begin(), outDirs.end(), *QRandomGenerator::global());
     }
@@ -221,13 +221,13 @@ QString GameController::resolvePlayerTurn(int dx, int dy){
     int newCol = player->getCol() + dy;
 
     if (!level->getGrid().isInside(newRow, newCol)) {
-        return QStringLiteral("Blocked!");
+        return  ("Blocked!");
     }
     if (isMoveBlockedByWall(player->getRow(), player->getCol(), newRow, newCol)) {
-        return QStringLiteral("Blocked!");
+        return  ("Blocked!");
     }
     if (!level->getGrid().isValidMove(newRow, newCol)) {
-        return QStringLiteral("Blocked!");
+        return  ("Blocked!");
     }
 
     player->setPos(newRow, newCol);
@@ -244,29 +244,29 @@ QString GameController::resolvePlayerTurn(int dx, int dy){
             if (LevelNumber == 5) {
                 victoryElapsedMs =elapsedMs();
                 pendingEnemyPhase = false;
-                return log.isEmpty() ? QStringLiteral("You conquered the dungeon!"): log + QStringLiteral("\nYou conquered the dungeon!");
+                return log.isEmpty() ?  ("You conquered the dungeon!"): log +  ("\nYou conquered the dungeon!");
             }
 
             nextLevel();
             pendingEnemyPhase = false;
             QString tail = log.isEmpty()
-                               ? QStringLiteral("You reached the exit. Descending to the next level.")
-                               : log + QStringLiteral("\nYou reached the exit. Descending to the next level.");
+                               ?  ("You reached the exit. Descending to the next level.")
+                               : log +  ("\nYou reached the exit. Descending to the next level.");
             if (LevelNumber == 5) {
-                tail += QStringLiteral("\nA grave chill spreads—the Grave Tyrant awaits!");
+                tail +=  ("\nA grave chill spreads—the Grave Tyrant awaits!");
             }
             return tail;
         }
         // prints messages based on current state when at exit
-        QString seal = QStringLiteral("The exit is sealed. ");
+        QString seal =  ("The exit is sealed. ");
         if (level->hasEnemies()) {
-            seal += QStringLiteral("Defeat all enemies. ");
+            seal +=  ("Defeat all enemies. ");
         }
         if (!player->getHasLevelKey()) {
-            seal += QStringLiteral("Find the dungeon key. ");
+            seal +=  ("Find the dungeon key. ");
         }
         if (!log.isEmpty()) {
-            return log + QStringLiteral("\n") + seal;
+            return log +  ("\n") + seal;
         }
         return seal;
     }
@@ -298,19 +298,19 @@ QString GameController::tryRacialAbility()
     if (!player || !level) {return QString();}
     // makes sure specialy abilty abilty is charged otherwise returns
     if (!player->isRacialAbilityReady()) {
-        return QStringLiteral("Racial ability not ready yet. Keep exploring.");
+        return  "Racial ability not ready yet. Keep exploring.";
     }
     //gets player race then based on it uses a specific ability
     const QString race = player->getRace().trimmed();
     QString msg;
     //humans get healing
-    if (race == QStringLiteral("Human")) {
+    if (race ==  "Human") {
         const int heal = player->getMaxHealth() * 35 / 100;
         player->heal(heal);
-        msg = QStringLiteral("Human — Second Wind! You recover ") + QString::number(heal) + QStringLiteral(" HP.");
+        msg =  "Human — Second Wind! You recover " + QString::number(heal) +  " HP.";
     }
     // elf removes traps
-    else if (race == QStringLiteral("Elf")) {
+    else if (race ==  "Elf") {
         int revealed = 0;
         for (int r = 0; r < level->getRows(); r++) {
             for (int c = 0; c < level->getCols(); c++) {
@@ -322,17 +322,17 @@ QString GameController::tryRacialAbility()
                 }
             }
         }
-        msg = QStringLiteral("Elf — Keen Senses! You revealed ") + QString::number(revealed)
-              + QStringLiteral(" hidden trap(s).");
+        msg =  "Elf — Keen Senses! You revealed " + QString::number(revealed)
+              +  " hidden trap(s).";
     }
     // uses dwrf ability
-    else if (race == QStringLiteral("Dwarf")) {
+    else if (race ==  "Dwarf") {
         player->applyDwarfStoneblood(10, 8);
-        msg = QStringLiteral("Dwarf — Stoneblood! +10 defense for 8 moves.");
+        msg =  "Dwarf — Stoneblood! +10 defense for 8 moves.";
     }
     //base case with no bailities
     else {
-        msg = QStringLiteral("No racial ability for this race.");
+        msg =  "No racial ability for this race.";
         return msg;
     }
     //resets the charge of the ability to 0
@@ -426,13 +426,13 @@ QString GameController::handleCellEvent() {
     else if (cell.hasVisibleTrap) {
         player->takeDamage(trapDmg);
         cell.hasVisibleTrap = false;
-        return QStringLiteral("You stepped on a spiked trap! Lost ") + QString::number(trapDmg) + QStringLiteral(" HP.");
+        return  ("You stepped on a spiked trap! Lost ") + QString::number(trapDmg) +  (" HP.");
     }
     //checks if cell has a trap and if does gives hm damage and removes it
     else if (cell.hasInvisibleTrap) {
         player->takeDamage(trapDmg);
         cell.hasInvisibleTrap = false;
-        return QStringLiteral("A hidden pressure plate snaps! Lost ") + QString::number(trapDmg) + QStringLiteral(" HP.");
+        return  ("A hidden pressure plate snaps! Lost ") + QString::number(trapDmg) +  (" HP.");
     }
 
     return "";
@@ -556,14 +556,19 @@ bool GameController::reloadVals(std::istream& in, int levelNum, qint64 runElapse
     pendingEnemyPhase = false;
     return true;
 }
+
+
+
 // loads files and details of game using file I/O
 bool GameController::loadGameFromFile(const QString& path, Player*& outPlayer, GameController*& outGc, QString& errMsg)
 {
     std::ifstream in(path.toStdString());
+    //safety check
     if (!in) {
-        errMsg = QStringLiteral("Could not open save file.");
+        errMsg =  "Could not open save file.";
         return false;
     }
+    //placeholding variables
     std::string line;
     int levelNum = 1;
     qint64 runElapsed = 0;
@@ -575,10 +580,12 @@ bool GameController::loadGameFromFile(const QString& path, Player*& outPlayer, G
     std::string name, race, style;
     int pr = 0, pc = 0, php = 0, patk = 0, pdef = 0, pkey = 0;
 
+    //makes sure it the correct save version
     if (!std::getline(in, line) || line != "VERSION 2") {
-        errMsg = QStringLiteral("Unsupported save version.");
+        errMsg =  "Unsupported save version.";
         return false;
     }
+
     auto readPair = [&](const std::string& prefix, int& out) -> bool {
         if (!std::getline(in, line)) {
             return false;
@@ -593,25 +600,25 @@ bool GameController::loadGameFromFile(const QString& path, Player*& outPlayer, G
     };
 
     if (!readPair("LEVELNUM", levelNum)) {
-        errMsg = QStringLiteral("Bad save (LEVELNUM).");
+        errMsg =  "Bad save (LEVELNUM).";
         return false;
     }
     long long re = 0;
     if (!std::getline(in, line)) {
-        errMsg = QStringLiteral("Bad save.");
+        errMsg =  "Bad save.";
         return false;
     }
         std::istringstream ls(line);
         std::string tag;
         ls >> tag >> re;
         if (tag != "RUNELAPSED") {
-            errMsg = QStringLiteral("Bad save (RUNELAPSED).");
+            errMsg =  "Bad save (RUNELAPSED).";
             return false;
         }
 
     runElapsed = re;
     if (!std::getline(in, line)) {
-        errMsg = QStringLiteral("Bad save.");
+        errMsg =  "Bad save.";
         return false;
     }
     {
@@ -620,44 +627,44 @@ bool GameController::loadGameFromFile(const QString& path, Player*& outPlayer, G
         quint32 seedVal = 0;
         ls >> tag >> seedVal;
         if (tag != "LEVELSEED") {
-            errMsg = QStringLiteral("Bad save (LEVELSEED).");
+            errMsg =  "Bad save (LEVELSEED).";
             return false;
         }
         levelSeed = seedVal;
     }
     if (!readPair("RACIAL_PERIOD", racialPeriod)) {
-        errMsg = QStringLiteral("Bad save.");
+        errMsg =  "Bad save.";
         return false;
     }
     if (!readPair("MOVES_RACIAL", movesRacial)) {
-        errMsg = QStringLiteral("Bad save.");
+        errMsg =  "Bad save.";
         return false;
     }
     if (!readPair("DWARF_TURNS", dwarfTurns)) {
-        errMsg = QStringLiteral("Bad save.");
+        errMsg =  "Bad save.";
         return false;
     }
     if (!readPair("DWARF_BONUS", dwarfBonus)) {
-        errMsg = QStringLiteral("Bad save.");
+        errMsg =  "Bad save.";
         return false;
     }
     if (!std::getline(in, line) || line.rfind("NAME ", 0) != 0) {
-        errMsg = QStringLiteral("Bad save (NAME).");
+        errMsg =  "Bad save (NAME).";
         return false;
     }
     name = line.substr(5);
     if (!std::getline(in, line) || line.rfind("RACE ", 0) != 0) {
-        errMsg = QStringLiteral("Bad save (RACE).");
+        errMsg ="Bad save (RACE).";
         return false;
     }
     race = line.substr(5);
     if (!std::getline(in, line) || line.rfind("STYLE ", 0) != 0) {
-        errMsg = QStringLiteral("Bad save (STYLE).");
+        errMsg = "Bad save (STYLE).";
         return false;
     }
     style = line.substr(6);
     if (!std::getline(in, line) || line.rfind("PLAYER ", 0) != 0) {
-        errMsg = QStringLiteral("Bad save (PLAYER).");
+        errMsg =  "Bad save (PLAYER).";
         return false;
     }
     {
@@ -675,21 +682,21 @@ bool GameController::loadGameFromFile(const QString& path, Player*& outPlayer, G
     const QString qstyle = QString::fromStdString(style);
 
     Player* loadedPlayer = nullptr;
-    if (qstyle == QStringLiteral("Warrior")) {
+    if (qstyle ==  "Warrior") {
         loadedPlayer = new Warrior(qname, qrace);
-    } else if (qstyle == QStringLiteral("Fire Mage")) {
+    } else if (qstyle ==  "Fire Mage") {
         loadedPlayer = new FireMage(qname, qrace);
-    } else if (qstyle == QStringLiteral("Ice Mage")) {
+    } else if (qstyle ==  "Ice Mage") {
         loadedPlayer = new IceMage(qname, qrace);
     } else {
-        errMsg = QStringLiteral("Unknown class in save.");
+        errMsg ="Unknown class in save.";
         return false;
     }
 
     GameController* loadedGc = new GameController(loadedPlayer);
     if (!loadedGc->reloadVals(levelIn, levelNum, runElapsed, levelSeed, racialPeriod, movesRacial,
                                           dwarfTurns, dwarfBonus, pr, pc, php, patk, pdef, pkey != 0)) {
-        errMsg = QStringLiteral("Failed to restore dungeon state.");
+        errMsg = "Failed to restore dungeon state.";
         delete loadedGc;
         delete loadedPlayer;
         return false;
