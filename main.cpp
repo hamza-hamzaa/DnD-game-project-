@@ -1,5 +1,5 @@
 #include "mainwindow.h"
-
+#include<iostream>
 #include <QApplication>
 
 int main(int argc, char *argv[])
@@ -8,4 +8,5 @@ int main(int argc, char *argv[])
     MainWindow w;
     w.show();
     return QCoreApplication::exec();
+    std::cout<<"hello<3";
 }

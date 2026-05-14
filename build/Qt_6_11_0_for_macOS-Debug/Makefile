@@ -930,17 +930,27 @@ compiler_rcc_clean:
 	-$(DEL_FILE) qrc_resources.cpp
 qrc_resources.cpp: ../../resources.qrc \
 		../../../Qt/6.11.0/macos/libexec/rcc \
+		../../forms/exit42.png \
 		../../forms/elf\ warrior.png \
 		../../forms/goblin.png \
+		../../forms/trap42.png \
+		../../forms/potion42.png \
 		../../forms/human\ warrior.png \
+		../../forms/wall_side.png \
 		../../forms/human\ fire\ mage.png \
+		../../forms/floor42.png \
 		../../forms/skeleton.png \
 		../../forms/dwarf\ warrior.png \
 		../../forms/orc.png \
+		../../forms/wall_top.png \
+		../../forms/floor_bones.png \
+		../../forms/floor_skull.png \
 		../../forms/dwarf\ fire\ mage.png \
 		../../forms/elf\ ice\ mage.png \
+		../../forms/key.png \
 		../../forms/elf\ fire\ mage.png \
 		../../forms/dwarf\ ice\ mage.png \
+		../../forms/floor_web.png \
 		../../forms/human\ ice\ mage.png \
 		../../sounds/step.wav
 	/Users/hamza/Qt/6.11.0/macos/libexec/rcc -name resources --no-zstd ../../resources.qrc -o qrc_resources.cpp
@@ -971,6 +981,7 @@ moc_mainwindow.cpp: ../../mainwindow.h \
 		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QTimer \
 		../../GameController.h \
 		../../Level.h \
+		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QRandomGenerator \
 		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QString \
 		../../Grid.h \
 		../../enemy.h \
@@ -1005,25 +1016,25 @@ compiler_clean: compiler_rcc_clean compiler_moc_header_clean compiler_uic_clean
 
 GameController.o: ../../GameController.cpp ../../GameController.h \
 		../../Level.h \
+		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QRandomGenerator \
 		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QString \
 		../../Grid.h \
 		../../enemy.h \
 		../../character.h \
 		../../player.h \
 		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QStringList \
-		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QDateTime \
-		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QRandomGenerator
+		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QDateTime
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o GameController.o ../../GameController.cpp
 
 Grid.o: ../../Grid.cpp ../../Grid.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o Grid.o ../../Grid.cpp
 
 Level.o: ../../Level.cpp ../../Level.h \
+		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QRandomGenerator \
 		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QString \
 		../../Grid.h \
 		../../enemy.h \
-		../../character.h \
-		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QRandomGenerator
+		../../character.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o Level.o ../../Level.cpp
 
 character.o: ../../character.cpp ../../character.h \
@@ -1058,6 +1069,7 @@ main.o: ../../main.cpp ../../mainwindow.h \
 		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QTimer \
 		../../GameController.h \
 		../../Level.h \
+		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QRandomGenerator \
 		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QString \
 		../../Grid.h \
 		../../enemy.h \
@@ -1090,6 +1102,7 @@ mainwindow.o: ../../mainwindow.cpp ../../mainwindow.h \
 		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QTimer \
 		../../GameController.h \
 		../../Level.h \
+		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QRandomGenerator \
 		../../../Qt/6.11.0/macos/lib/QtCore.framework/Headers/QString \
 		../../Grid.h \
 		../../enemy.h \

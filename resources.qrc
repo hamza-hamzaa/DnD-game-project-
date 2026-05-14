@@ -1,5 +1,4 @@
-<!DOCTYPE RCC>
-<RCC version="1.0">
+<RCC>
     <qresource prefix="/">
         <file>forms/goblin.png</file>
         <file>forms/orc.png</file>
@@ -14,5 +13,15 @@
         <file>forms/human ice mage.png</file>
         <file>forms/human warrior.png</file>
         <file>sounds/step.wav</file>
+        <file>forms/exit42.png</file>
+        <file>forms/floor_bones.png</file>
+        <file>forms/floor_skull.png</file>
+        <file>forms/floor_web.png</file>
+        <file>forms/floor42.png</file>
+        <file>forms/key.png</file>
+        <file>forms/potion42.png</file>
+        <file>forms/trap42.png</file>
+        <file>forms/wall_side.png</file>
+        <file>forms/wall_top.png</file>
     </qresource>
 </RCC>

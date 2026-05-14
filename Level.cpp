@@ -11,6 +11,8 @@
 #include <utility>
 #include <vector>
 
+//the above Libraries help with random , arrays , saving /loading , and data structures
+
 namespace {
 
 void removeWallBetween(Grid& grid, int r, int c, int nr, int nc)
@@ -29,6 +31,8 @@ void removeWallBetween(Grid& grid, int r, int c, int nr, int nc)
         grid.getCell(nr, nc).wallBottom = false;
     }
 }
+
+//the code above remove the walls between the cells in which the function opens a path between two cells
 
 void dfsCarve(Grid& grid, int rows, int cols, int r, int c, std::vector<std::vector<bool>>& vis,
               QRandomGenerator& rng)
@@ -59,6 +63,8 @@ void dfsCarve(Grid& grid, int rows, int cols, int r, int c, std::vector<std::vec
     }
 }
 
+//the function above creates the maze by visiting cells and removing walls randomly
+
 void addMazeLoops(Grid& grid, int rows, int cols, QRandomGenerator& rng)
 {
     std::vector<std::array<int, 4>> edges;
@@ -84,6 +90,8 @@ void addMazeLoops(Grid& grid, int rows, int cols, QRandomGenerator& rng)
     }
 }
 
+//the above code makes the maze easier by adding more paths
+
 } // namespace
 
 Level::Level(int LevelNum)
@@ -95,14 +103,18 @@ Level::Level(int LevelNum)
     , equipmentNum(0)
 {
 }
+//bigger level=bigger map which means that each level gets bigger and harder
 
 bool Level::hasEnemies() const {
     return !enemies.empty();
 }
+//if enemies exist its true
 
 bool Level::isCompleted() const {
     return enemies.empty();
 }
+//no enemies mean level finished
+
 
 bool Level::isExitCell(int row, int col) const {
     return row == Rows - 1 && col == Cols - 1;
@@ -273,6 +285,7 @@ int Level::getCols() const {
     return Cols;
 }
 
+//the below code saves the gave
 void Level::writeState(std::ostream& os) const
 {
     os << "ROWS " << Rows << "\n";
@@ -305,6 +318,7 @@ void Level::writeState(std::ostream& os) const
     }
 }
 
+//the below code loads the game in which the functions saves and load the game
 bool Level::readState(std::istream& is)
 {
     std::string line;

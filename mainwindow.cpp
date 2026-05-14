@@ -13,6 +13,7 @@
 #include <QUrl>
 #include <algorithm>
 
+//tries app dir first then current working dir, so it works on any machine
 QString MainWindow::formsDirectory() const
 {
     const QString appForms = QDir(QCoreApplication::applicationDirPath()).filePath("forms");
@@ -26,11 +27,13 @@ QString MainWindow::formsDirectory() const
     return appForms;
 }
 
+//save file goes in the current working directory
 QString MainWindow::defaultSaveFilePath() const
 {
     return QDir(QDir::currentPath()).absoluteFilePath(QStringLiteral("dungeon_save.txt"));
 }
 
+//only plays if the sound file actually loaded, avoids crash
 void MainWindow::playUiBlip()
 {
     if (uiBlip.isLoaded()) {
@@ -38,6 +41,7 @@ void MainWindow::playUiBlip()
     }
 }
 
+//builds the file name based on race and class combo then checks qrc first then disk
 QString MainWindow::findPlayerSpritePath() const
 {
     if (!player) {
@@ -50,6 +54,7 @@ QString MainWindow::findPlayerSpritePath() const
 
     QString fileName;
 
+    //map every race/class combo to its sprite file name
     if (race == "Human" && style == "Warrior") {
         fileName = "human warrior.png";
     } else if (race == "Human" && style == "Fire Mage") {
@@ -80,6 +85,7 @@ QString MainWindow::findPlayerSpritePath() const
         return QString();
     }
 
+    //check qrc bundle first, then fall back to disk path
     const QString qrcPath = QStringLiteral(":/forms/") + fileName;
     if (!QPixmap(qrcPath).isNull()) {
         return qrcPath;
@@ -92,6 +98,8 @@ QString MainWindow::findPlayerSpritePath() const
 
     return QString();
 }
+
+//lich uses skeleton sprite for now since we dont have a unique one yet
 QString MainWindow::findEnemySpritePath(const Enemy& enemy) const
 {
     const QString type = enemy.getType().trimmed();
@@ -112,28 +120,26 @@ QString MainWindow::findEnemySpritePath(const Enemy& enemy) const
     return QString();
 }
 
-// ─────────────────────────────────────────────
-//  Constructor / Destructor
-// ─────────────────────────────────────────────
-
+//constructor sets up sound, timer, palette, builds all pages then shows the start screen
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     uiBlip.setSource(QUrl(QStringLiteral("qrc:/sounds/step.wav")));
     uiBlip.setVolume(0.35f);
 
+    //hud timer ticks every 200ms to keep the time display updated
     connect(&hudTimer, &QTimer::timeout, this, &MainWindow::onHudTick);
     hudTimer.start(200);
 
     setWindowTitle("Dungeon Realms");
     setFixedSize(800, 650);
 
-    // dark background for the whole window
+    //dark background for the whole window
     QPalette pal = palette();
     pal.setColor(QPalette::Window, QColor(15, 12, 20));
     setPalette(pal);
 
-    // stacked widget holds all pages
+    //stacked widget is the main container, each page is one index
     stack = new QStackedWidget(this);
     setCentralWidget(stack);
 
@@ -142,24 +148,22 @@ MainWindow::MainWindow(QWidget *parent)
     buildGamePage();
     buildEndPage();
 
-    stack->addWidget(startPage);   // index 0
-    stack->addWidget(selectPage);  // index 1
-    stack->addWidget(gamePage);    // index 2
-    stack->addWidget(endPage);     // index 3
+    stack->addWidget(startPage);
+    stack->addWidget(selectPage);
+    stack->addWidget(gamePage);
+    stack->addWidget(endPage);
 
     stack->setCurrentIndex(0);
 }
 
+//delete gc first since it might reference player internally
 MainWindow::~MainWindow()
 {
     delete gc;
     delete player;
 }
 
-// ─────────────────────────────────────────────
-//  Page builders
-// ─────────────────────────────────────────────
-
+//builds the title screen with name input and begin button
 void MainWindow::buildStartPage()
 {
     startPage = new QWidget;
@@ -169,7 +173,6 @@ void MainWindow::buildStartPage()
     root->setAlignment(Qt::AlignCenter);
     root->setSpacing(24);
 
-    // title
     QLabel* title = new QLabel("⚔  DUNGEON & DRAGONS  ⚔");
     title->setAlignment(Qt::AlignCenter);
     title->setStyleSheet(
@@ -188,7 +191,6 @@ void MainWindow::buildStartPage()
 
     root->addSpacing(20);
 
-    // name input
     QLabel* nameLabel = new QLabel("Enter your name:");
     nameLabel->setAlignment(Qt::AlignCenter);
     nameLabel->setStyleSheet("color: #c8b88a; font-size: 16px;");
@@ -215,7 +217,6 @@ void MainWindow::buildStartPage()
 
     root->addSpacing(10);
 
-    // start button
     startBtn = new QPushButton("BEGIN ADVENTURE");
     startBtn->setFixedSize(220, 48);
     startBtn->setCursor(Qt::PointingHandCursor);
@@ -244,6 +245,7 @@ void MainWindow::buildStartPage()
     root->addLayout(btnRow);
 }
 
+//builds the race and class selection page
 void MainWindow::buildSelectPage()
 {
     selectPage = new QWidget;
@@ -263,7 +265,7 @@ void MainWindow::buildSelectPage()
 
     root->addSpacing(16);
 
-    // race row
+    //race dropdown
     QLabel* raceLabel = new QLabel("Race:");
     raceLabel->setStyleSheet("color: #c8b88a; font-size: 15px;");
     raceBox = new QComboBox;
@@ -286,7 +288,7 @@ void MainWindow::buildSelectPage()
     raceRow->addWidget(raceBox);
     root->addLayout(raceRow);
 
-    // style row
+    //class dropdown
     QLabel* styleLabel = new QLabel("Class:");
     styleLabel->setStyleSheet("color: #c8b88a; font-size: 15px;");
     styleBox = new QComboBox;
@@ -302,7 +304,7 @@ void MainWindow::buildSelectPage()
     styleRow->addWidget(styleBox);
     root->addLayout(styleRow);
 
-    // class description hint
+    //hint text explaining how racial abilities work
     QLabel* hint = new QLabel(
         "Warrior / Fire Mage / Ice Mage — each plays differently.\n"
         "Racial ability (R): Human heals, Elf reveals hidden traps, Dwarf gains temporary armor. "
@@ -337,6 +339,7 @@ void MainWindow::buildSelectPage()
     root->addLayout(btnRow);
 }
 
+//builds the main game page with hud, graphics view, log bar, and bottom buttons
 void MainWindow::buildGamePage()
 {
     gamePage = new QWidget;
@@ -346,7 +349,7 @@ void MainWindow::buildGamePage()
     root->setContentsMargins(8, 8, 8, 8);
     root->setSpacing(6);
 
-    // ── HUD bar at top ──
+    //hud bar at top showing level, key, time, enemies, hp
     QHBoxLayout* hud = new QHBoxLayout;
     hud->setSpacing(16);
 
@@ -403,12 +406,15 @@ void MainWindow::buildGamePage()
 
     root->addLayout(hud);
 
-    // ── Graphics view (the dungeon) ──
+    //graphics view that renders the dungeon scene
     scene = new QGraphicsScene(this);
     scene->setBackgroundBrush(QBrush(QColor(10, 8, 16)));
 
     view = new QGraphicsView(scene, gamePage);
     view->setRenderHint(QPainter::Antialiasing);
+    //no focus so arrow keys dont get captured by the scroll bars
+    view->setFocusPolicy(Qt::NoFocus);
+    view->setRenderHint(QPainter::SmoothPixmapTransform, false);
     view->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     view->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     view->setStyleSheet(
@@ -419,7 +425,7 @@ void MainWindow::buildGamePage()
         );
     root->addWidget(view, 1);
 
-    // ── Log label ──
+    //log bar shows what happened last turn
     logLabel = new QLabel("Use arrow keys or WASD to move.");
     logLabel->setAlignment(Qt::AlignCenter);
     logLabel->setWordWrap(true);
@@ -433,7 +439,7 @@ void MainWindow::buildGamePage()
         );
     root->addWidget(logLabel);
 
-    // ── Restart button ──
+    //bottom row with restart, save, load buttons
     restartBtn = new QPushButton("Restart Level");
     restartBtn->setFixedHeight(32);
     restartBtn->setCursor(Qt::PointingHandCursor);
@@ -466,8 +472,8 @@ void MainWindow::buildGamePage()
     root->addLayout(bottomRow);
 }
 
-void MainWindow::buildEndPage()
-{
+//builds the win/lose screen, the play again button handles both cases
+void MainWindow::buildEndPage(){
     endPage = new QWidget;
     endPage->setStyleSheet("background-color: #0f0c14;");
 
@@ -497,6 +503,7 @@ void MainWindow::buildEndPage()
         "QPushButton:hover { background-color: #284e28; border-color: #68e068; }"
         );
     connect(endRestartBtn, &QPushButton::clicked, [this]() {
+        //if player died just restart that level, otherwise go back to start screen
         if (gc && player && gc->checkLose()) {
             gc->restartLevel();
             drawGrid();
@@ -521,10 +528,7 @@ void MainWindow::buildEndPage()
     root->addLayout(btnRow);
 }
 
-// ────────────────────────────────────────────
-//  Slot: onStartClicked (Start page)
-// ────────────────────────────────────────────
-
+//validates name is not empty then moves to character select
 void MainWindow::onStartClicked()
 {
     QString name = nameInput->text().trimmed();
@@ -532,13 +536,10 @@ void MainWindow::onStartClicked()
         nameInput->setPlaceholderText("Please enter a name first!");
         return;
     }
-    stack->setCurrentIndex(1); // go to character select
+    stack->setCurrentIndex(1);
 }
 
-// ─────────────────────────────────────────────
-//  Slot: onSelectClicked (Character select page)
-// ─────────────────────────────────────────────
-
+//creates the player and controller based on what the user picked, then starts the game
 void MainWindow::onSelectClicked()
 {
     QString name  = nameInput->text().trimmed();
@@ -558,6 +559,7 @@ void MainWindow::onSelectClicked()
     gc = new GameController(player);
     gc->startGame();
 
+    //show tutorial popup only the first time
     QSettings qs;
     if (!qs.value(QStringLiteral("tutorial/dungeon_v1"), false).toBool()) {
         QMessageBox::information(
@@ -578,13 +580,10 @@ void MainWindow::onSelectClicked()
                 .arg(player->getRacialMovePeriod()));
 
     stack->setCurrentIndex(2);
-    gamePage->setFocus();
+    setFocus(); //important so keyboard input works right away
 }
 
-// ─────────────────────────────────────────────
-//  Slot: onRestartClicked (in-game restart)
-// ─────────────────────────────────────────────
-
+//reloads the level with full hp
 void MainWindow::onRestartClicked()
 {
     if (!gc || !player) return;
@@ -595,16 +594,16 @@ void MainWindow::onRestartClicked()
     showLog("Level restarted.");
 }
 
-// ─────────────────────────────────────────────
-//  Keyboard input
-// ─────────────────────────────────────────────
+//handles wasd and arrow keys, also r for racial ability
 void MainWindow::keyPressEvent(QKeyEvent* event)
 {
+    //ignore key presses when not on the game page
     if (stack->currentIndex() != 2 || !gc || !player) {
         QMainWindow::keyPressEvent(event);
         return;
     }
 
+    //r key triggers racial ability if its ready
     if (event->key() == Qt::Key_R) {
         const QString msg = gc->tryRacialAbility();
         if (!msg.isEmpty()) {
@@ -648,11 +647,13 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
         return;
     }
 
+    //resolve player move and redraw
     const QString msg = gc->resolvePlayerTurn(dx, dy);
     drawGrid();
     redrawEntities();
     updateHUD();
 
+    //enemy turn runs 320ms after player turn so it feels like a sequence
     if (gc->hasPendingEnemyPhase()) {
         showLog(QStringLiteral("Enemy turn..."));
         QTimer::singleShot(320, this, [this, msg, dir]() {
@@ -693,13 +694,26 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
 
     QTimer::singleShot(800, this, &MainWindow::checkEndConditions);
 }
-// ─────────────────────────────────────────────
-//  Grid rendering
-// ─────────────────────────────────────────────
 
+//redraws every tile, wall, and item from scratch each turn
 void MainWindow::drawGrid()
 {
     if (!gc) return;
+
+    //load all tile images once on first call, avoids lag from repeated disk reads
+    if (!pixmapsLoaded) {
+        floorPix  = QPixmap(":/forms/floor42.png");
+        trapPix   = QPixmap(":/forms/trap42.png");
+        potionPix = QPixmap(":/forms/potion42.png");
+        exitPix   = QPixmap(":/forms/exit42.png");
+        wallTopPix  = QPixmap(":/forms/wall_top.png");
+        wallSidePix = QPixmap(":/forms/wall_side.png");
+        keyPix = QPixmap(":/forms/key.png");
+        floorSkullPix = QPixmap(":/forms/floor_skull.png");
+        floorWebPix   = QPixmap(":/forms/floor_web.png");
+        floorBonesPix = QPixmap(":/forms/floor_bones.png");
+        pixmapsLoaded = true;
+    }
 
     scene->clear();
     cellItems.clear();
@@ -711,6 +725,7 @@ void MainWindow::drawGrid()
     const int rows = grid.getRows();
     const int cols = grid.getCols();
 
+    //cell size shrinks as levels get bigger so everything still fits
     cellSize = std::clamp(560 / std::max(rows, cols), 28, 60);
 
     cellItems.resize(rows);
@@ -720,99 +735,114 @@ void MainWindow::drawGrid()
         for (int c = 0; c < cols; c++) {
             Cell& cell = grid.getCell(r, c);
 
+            //exit is always the bottom right cell
             const bool isExit = (r == rows - 1 && c == cols - 1);
 
-            QColor tileColor = QColor(55, 45, 80);
-            if (isExit) {
-                tileColor = QColor(90, 70, 30);
-            }
-            if (cell.hasPotion) {
-                tileColor = QColor(35, 120, 55);
-            }
-            if (cell.hasVisibleTrap) {
-                tileColor = QColor(60, 20, 10);
+            //always draw plain floor first as the base layer
+            if (!floorPix.isNull()) {
+                QGraphicsPixmapItem* tile = scene->addPixmap(
+                    floorPix.scaled(cellSize, cellSize, Qt::IgnoreAspectRatio, Qt::FastTransformation)
+                    );
+                tile->setPos(c * cellSize, r * cellSize);
             }
 
-            QGraphicsRectItem* rect = new QGraphicsRectItem(
-                c * cellSize, r * cellSize, cellSize - 2, cellSize - 2
-                );
-            rect->setBrush(QBrush(tileColor));
-            rect->setPen(QPen(QColor(100, 80, 130), 1));
-            scene->addItem(rect);
-            cellItems[r][c] = rect;
+            //draw decoration overlay on plain floor cells only, not over items
+            if (!isExit && !cell.hasPotion && !cell.hasVisibleTrap && !cell.hasKey) {
+                int seed = r * 100 + c; //deterministic so decorations dont flicker on redraw
+                QPixmap decPix;
+                if (seed % 11 == 0)      decPix = floorSkullPix;
+                else if (seed % 13 == 0) decPix = floorWebPix;
+                else if (seed % 17 == 0) decPix = floorBonesPix;
 
-            if (cell.hasVisibleTrap) {
-                QGraphicsTextItem* lbl = scene->addText(QStringLiteral("⚠"));
-                lbl->setDefaultTextColor(QColor(220, 80, 40));
-                lbl->setFont(QFont("Segoe UI Emoji", 16));
-                lbl->setPos(c * cellSize + 14, r * cellSize + 10);
+                if (!decPix.isNull()) {
+                    int decSize = cellSize / 2;
+                    int offset = (cellSize - decSize) / 2;
+                    QGraphicsPixmapItem* dec = scene->addPixmap(
+                        decPix.scaled(decSize, decSize, Qt::IgnoreAspectRatio, Qt::FastTransformation)
+                        );
+                    dec->setPos(c * cellSize + offset, r * cellSize + offset);
+                }
             }
-            if (isExit) {
-                QGraphicsTextItem* ex = scene->addText(QStringLiteral("⛩"));
-                ex->setDefaultTextColor(QColor(255, 210, 120));
-                ex->setFont(QFont("Segoe UI Emoji", 14));
-                ex->setPos(c * cellSize + 16, r * cellSize + 10);
+
+            //draw item on top of floor, centered in the cell
+            QPixmap itemPix;
+            if (isExit)                   itemPix = exitPix;
+            else if (cell.hasPotion)      itemPix = potionPix;
+            else if (cell.hasVisibleTrap) itemPix = trapPix;
+            else if (cell.hasKey)         itemPix = keyPix;
+
+            if (!itemPix.isNull()) {
+                int itemSize = cellSize / 2;
+                int offset = (cellSize - itemSize) / 2;
+                QGraphicsPixmapItem* item = scene->addPixmap(
+                    itemPix.scaled(itemSize, itemSize, Qt::IgnoreAspectRatio, Qt::FastTransformation)
+                    );
+                item->setPos(c * cellSize + offset, r * cellSize + offset);
             }
         }
     }
 
-    const int wt = 6;
-    const QColor wallColor(180, 150, 220);
+    //wall thickness is a quarter of the cell size
+    const int wt = cellSize / 4;
 
     for (int r = 0; r < rows; r++) {
         for (int c = 0; c < cols; c++) {
             const Cell& cell = grid.getCell(r, c);
-            if (r == 0 && cell.wallTop) {
-                auto* wall = new QGraphicsRectItem(
-                    c * cellSize, r * cellSize - wt / 2.0, cellSize, wt);
-                wall->setBrush(QBrush(wallColor));
-                wall->setPen(Qt::NoPen);
-                scene->addItem(wall);
+
+            //top wall drawn from this cell
+            if (cell.wallTop) {
+                QGraphicsPixmapItem* wall = scene->addPixmap(
+                    wallTopPix.scaled(cellSize, wt, Qt::IgnoreAspectRatio, Qt::FastTransformation)
+                    );
+                wall->setPos(c * cellSize, r * cellSize);
+                wall->setZValue(3);
             }
-            if (c == 0 && cell.wallLeft) {
-                auto* wall = new QGraphicsRectItem(
-                    c * cellSize - wt / 2.0, r * cellSize, wt, cellSize);
-                wall->setBrush(QBrush(wallColor));
-                wall->setPen(Qt::NoPen);
-                scene->addItem(wall);
+
+            //left wall drawn from this cell
+            if (cell.wallLeft) {
+                QGraphicsPixmapItem* wall = scene->addPixmap(
+                    wallSidePix.scaled(wt, cellSize, Qt::IgnoreAspectRatio, Qt::FastTransformation)
+                    );
+                wall->setPos(c * cellSize, r * cellSize);
+                wall->setZValue(3);
             }
-            if (cell.wallRight) {
-                auto* wall = new QGraphicsRectItem(
-                    (c + 1) * cellSize - wt / 2.0, r * cellSize, wt, cellSize);
-                wall->setBrush(QBrush(wallColor));
-                wall->setPen(Qt::NoPen);
-                scene->addItem(wall);
+
+            //bottom wall only drawn for the last row to avoid double drawing
+            if (r == rows - 1 && cell.wallBottom) {
+                QGraphicsPixmapItem* wall = scene->addPixmap(
+                    wallTopPix.scaled(cellSize, wt, Qt::IgnoreAspectRatio, Qt::FastTransformation)
+                    );
+                wall->setPos(c * cellSize, (r + 1) * cellSize - wt);
+                wall->setZValue(3);
             }
-            if (cell.wallBottom) {
-                auto* wall = new QGraphicsRectItem(
-                    c * cellSize, (r + 1) * cellSize - wt / 2.0, cellSize, wt);
-                wall->setBrush(QBrush(wallColor));
-                wall->setPen(Qt::NoPen);
-                scene->addItem(wall);
+
+            //right wall only drawn for the last column to avoid double drawing
+            if (c == cols - 1 && cell.wallRight) {
+                QGraphicsPixmapItem* wall = scene->addPixmap(
+                    wallSidePix.scaled(wt, cellSize, Qt::IgnoreAspectRatio, Qt::FastTransformation)
+                    );
+                wall->setPos((c + 1) * cellSize - wt, r * cellSize);
+                wall->setZValue(3);
             }
         }
     }
-
     scene->setSceneRect(0, 0, cols * cellSize, rows * cellSize);
     view->setScene(scene);
     view->centerOn(scene->sceneRect().center());
 }
 
-// ─────────────────────────────────────────────
-//  Entity rendering (player + enemies)
-// ─────────────────────────────────────────────
-
+//removes old sprites then redraws enemies and player on top of the existing grid
 void MainWindow::redrawEntities()
 {
     if (!gc || !player) return;
 
-    // remove old enemy sprites
+    //remove old enemy sprites from scene
     for (int i = 0; i < enemySprites.size(); i++) {
         scene->removeItem(enemySprites[i]);
     }
     enemySprites.clear();
 
-    // remove old player visuals
+    //remove old player sprite
     if (playerSprite) {
         scene->removeItem(playerSprite);
         playerSprite = nullptr;
@@ -822,10 +852,12 @@ void MainWindow::redrawEntities()
         playerIcon = nullptr;
     }
 
-    const int spriteSize = cellSize - 16;
-    const int spriteOffset = (cellSize - spriteSize) / 2;
+    //player is slightly bigger than enemies so it stands out
+    const int enemySpriteSize = cellSize - 32;
+    const int playerSpriteSize = cellSize - 15;
+    const int spriteOffset = (cellSize - enemySpriteSize) / 2;
 
-    // draw enemies
+    //draw each living enemy at its current position
     std::vector<Enemy>& enemies = gc->getLevel()->getEnemies();
 
     for (size_t i = 0; i < enemies.size(); i++) {
@@ -839,14 +871,15 @@ void MainWindow::redrawEntities()
 
             if (!sprite.isNull()) {
                 QPixmap scaledSprite = sprite.scaled(
-                    spriteSize,
-                    spriteSize,
+                    enemySpriteSize,
+                    enemySpriteSize,
                     Qt::KeepAspectRatio,
-                    Qt::SmoothTransformation
+                    Qt::FastTransformation
                     );
 
                 QGraphicsPixmapItem* enemyItem = scene->addPixmap(scaledSprite);
 
+                //center the sprite within the cell
                 qreal offsetX = (cellSize - scaledSprite.width()) / 2.0;
                 qreal offsetY = (cellSize - scaledSprite.height()) / 2.0;
 
@@ -858,7 +891,7 @@ void MainWindow::redrawEntities()
         }
     }
 
-    // draw player
+    //draw player sprite on top of everything
     int pr = player->getRow();
     int pc = player->getCol();
 
@@ -869,10 +902,10 @@ void MainWindow::redrawEntities()
 
         if (!sprite.isNull()) {
             QPixmap scaledSprite = sprite.scaled(
-                spriteSize,
-                spriteSize,
+                playerSpriteSize,
+                playerSpriteSize,
                 Qt::KeepAspectRatio,
-                Qt::SmoothTransformation
+                Qt::FastTransformation
                 );
 
             playerSprite = scene->addPixmap(scaledSprite);
@@ -885,21 +918,9 @@ void MainWindow::redrawEntities()
             return;
         }
     }
-
-    // fallback player icon if sprite missing
-    QString playerEmoji;
-    if (player->getStyle() == "Warrior")        playerEmoji = "⚔";
-    else if (player->getStyle() == "Fire Mage") playerEmoji = "🔥";
-    else                                        playerEmoji = "❄";
-
-    playerIcon = scene->addText(playerEmoji);
-    playerIcon->setFont(QFont("Segoe UI Emoji", 32));
-    playerIcon->setPos(pc * cellSize + spriteOffset / 2, pr * cellSize + 2);
 }
-// ─────────────────────────────────────────────
-//  HUD update
-// ─────────────────────────────────────────────
 
+//refreshes all the hud labels and the hp bar
 void MainWindow::updateHUD()
 {
     if (!player || !gc) return;
@@ -913,6 +934,7 @@ void MainWindow::updateHUD()
 
     levelLabel->setText("Level " + QString::number(gc->getLevelNumber()));
 
+    //key label turns gold when player has the key
     if (player->getHasLevelKey()) {
         keyLabel->setText("Key: Yes");
         keyLabel->setStyleSheet(
@@ -934,6 +956,8 @@ void MainWindow::updateHUD()
     if (gc->getLevel()) {
         enemyCount = static_cast<int>(gc->getLevel()->getEnemies().size());
     }
+
+    //show racial ability progress or ready status
     QString rLine;
     if (player->isRacialAbilityReady()) {
         rLine = QStringLiteral("R: READY");
@@ -943,23 +967,17 @@ void MainWindow::updateHUD()
     enemiesLabel->setText(QStringLiteral("Enemies: %1   %2").arg(enemyCount).arg(rLine));
 }
 
-// ─────────────────────────────────────────────
-//  Log message
-// ─────────────────────────────────────────────
-
+//just sets the log label text
 void MainWindow::showLog(const QString& msg)
 {
     logLabel->setText(msg);
 }
 
-// ─────────────────────────────────────────────
-//  Win / Lose check
-// ─────────────────────────────────────────────
-
+//checks win and lose after every turn, waits for at least one move before checking
 void MainWindow::checkEndConditions()
 {
     if (!gc || !player) return;
-    if (!gc->isLevelStarted()) return;  // don't check until player has moved
+    if (!gc->isLevelStarted()) return;
 
     if (gc->checkLose()) {
         endMsg->setText("💀  DEFEATED  💀\n\n" + player->getName() + " fell in the darkness...");
@@ -973,9 +991,10 @@ void MainWindow::checkEndConditions()
     }
 
     if (gc->checkWin()) {
+        //use victory time if set, otherwise use current elapsed
         const double scoreSec = gc->victoryTimeMs() > 0
-            ? gc->victoryTimeMs() / 1000.0
-            : gc->elapsedMs() / 1000.0;
+                                    ? gc->victoryTimeMs() / 1000.0
+                                    : gc->elapsedMs() / 1000.0;
         endMsg->setText(
             QStringLiteral("⚔  VICTORY!  ⚔\n\nWell done, ") + player->getName()
             + QStringLiteral("!\nFinal run time (score): ") + QString::number(scoreSec, 'f', 1)
@@ -989,6 +1008,7 @@ void MainWindow::checkEndConditions()
     }
 }
 
+//fires every 200ms to keep the time counter updated while playing
 void MainWindow::onHudTick()
 {
     if (stack->currentIndex() == 2 && gc && player) {
@@ -996,6 +1016,7 @@ void MainWindow::onHudTick()
     }
 }
 
+//writes the full game state to a text file
 void MainWindow::onSaveGameClicked()
 {
     if (!gc || !player) {
@@ -1010,6 +1031,7 @@ void MainWindow::onSaveGameClicked()
     }
 }
 
+//reads the save file and replaces current player and controller with the loaded ones
 void MainWindow::onLoadGameClicked()
 {
     QString err;
@@ -1026,5 +1048,5 @@ void MainWindow::onLoadGameClicked()
     redrawEntities();
     updateHUD();
     showLog(QStringLiteral("Loaded game from ") + path);
-    gamePage->setFocus();
+    setFocus();
 }
